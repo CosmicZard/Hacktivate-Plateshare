@@ -1,0 +1,1209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlateShare — Community-First Food Rescue</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>"
+    />
+  </head>
+  <body>
+    <!-- Top Bar Navigation (§4.1) -->
+    <header class="navbar">
+      <div class="navbar-container">
+        <a href="#landing" class="brand-logo" data-view-target="landing">
+          <i
+            class="fa-solid fa-leaf"
+            style="color: #8ad4a2; font-size: 1.35rem"
+          ></i>
+          <span>PlateShare</span>
+        </a>
+
+        <!-- Clean Single-Line Navigation Links -->
+        <nav class="nav-links">
+          <a href="#landing" data-view-target="landing"
+            ><i
+              class="fa-solid fa-house"
+              style="font-size: 0.82rem; margin-right: 4px"
+            ></i>
+            Home</a
+          >
+          <a
+            href="#donor-dashboard"
+            data-view-target="donor-dashboard"
+            class="nav-donor-only"
+            style="display: none"
+            ><i
+              class="fa-solid fa-gauge-high"
+              style="font-size: 0.82rem; margin-right: 4px"
+            ></i>
+            Dashboard</a
+          >
+          <a
+            href="#create-donation"
+            data-view-target="create-donation"
+            class="nav-donor-only"
+            style="display: none"
+            ><i
+              class="fa-solid fa-plus-circle"
+              style="font-size: 0.82rem; margin-right: 4px"
+            ></i>
+            Post Donation</a
+          >
+          <a href="#ngo-feed" data-view-target="ngo-feed"
+            ><i
+              class="fa-solid fa-utensils"
+              style="font-size: 0.82rem; margin-right: 4px"
+            ></i>
+            Find Meals</a
+          >
+          <a href="#community-feed" data-view-target="community-feed"
+            ><i
+              class="fa-solid fa-users"
+              style="font-size: 0.82rem; margin-right: 4px"
+            ></i>
+            Community</a
+          >
+          <a href="#impact" data-view-target="impact"
+            ><i
+              class="fa-solid fa-chart-pie"
+              style="font-size: 0.82rem; margin-right: 4px"
+            ></i>
+            Impact</a
+          >
+        </nav>
+
+        <!-- Clean Auth & Actions -->
+        <div class="nav-auth">
+          <div
+            id="navVisitorActions"
+            style="display: flex; align-items: center; gap: 12px"
+          >
+            <button class="nav-login-link" id="openLoginBtn">
+              <i
+                class="fa-solid fa-right-to-bracket"
+                style="margin-right: 4px"
+              ></i>
+              Log in
+            </button>
+            <button
+              class="btn btn-sm btn-orange"
+              onclick="
+                App.setRole('donor');
+                App.navigateTo('create-donation');
+              "
+            >
+              <i class="fa-solid fa-arrow-right" style="margin-right: 4px"></i>
+              Get started
+            </button>
+          </div>
+
+          <div
+            id="navUserBadge"
+            style="display: none; align-items: center; gap: 12px"
+          >
+            <div class="user-avatar-badge" title="Active user profile">
+              <div class="user-avatar-circle" id="userAvatarCircle">V</div>
+              <span id="userAvatarName">Visitor</span>
+            </div>
+            <button
+              class="nav-login-link"
+              style="font-size: 0.82rem; opacity: 0.8"
+              onclick="
+                App.setRole('visitor');
+                App.navigateTo('landing');
+              "
+            >
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> Log out
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Demo Role Switcher Strip (Organized below main navbar) -->
+    <div class="role-banner" id="demoRoleBanner">
+      <div class="role-banner-content">
+        <div class="role-banner-left">
+          <span class="role-banner-label"
+            ><i class="fa-solid fa-sliders" style="margin-right: 4px"></i> Role
+            Mode:</span
+          >
+          <div
+            class="role-pill-container"
+            title="Switch your view to test donor, NGO, or community flows"
+          >
+            <button class="role-pill-btn active" data-role="visitor">
+              <i class="fa-solid fa-eye"></i> Visitor
+            </button>
+            <button class="role-pill-btn" data-role="donor">
+              <i class="fa-solid fa-hotel"></i> Donor
+            </button>
+            <button class="role-pill-btn" data-role="ngo">
+              <i class="fa-solid fa-handshake-angle"></i> NGO
+            </button>
+            <button class="role-pill-btn" data-role="community">
+              <i class="fa-solid fa-users"></i> Community
+            </button>
+          </div>
+        </div>
+        <div class="role-banner-right">
+          <span id="roleBannerText"
+            ><i class="fa-solid fa-eye"></i> Public Visitor View — Community
+            food-rescue platform</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <main class="main-content">
+      <!-- VIEW 1: LANDING PAGE (§4.1) -->
+      <section id="view-landing" class="view-section active">
+        <div class="hero-section">
+          <div class="hero-badge">
+            <i
+              class="fa-solid fa-seedling"
+              style="color: var(--color-safe); margin-right: 5px"
+            ></i>
+            Food Rescue & Community Platform
+          </div>
+          <h1 class="hero-title">Turn surplus food into meals, not waste.</h1>
+          <p class="hero-subtext">
+            Restaurants, hotels, and events share extra food. NGOs and local
+            communities pick it up before it spoils.
+          </p>
+          <div class="hero-ctas">
+            <button class="btn btn-orange btn-lg" id="heroShareBtn">
+              <i class="fa-solid fa-hand-holding-heart"></i> I have food to
+              share
+            </button>
+            <button class="btn btn-outline-green btn-lg" id="heroNeedBtn">
+              <i class="fa-solid fa-people-roof"></i> I need food for my
+              community
+            </button>
+          </div>
+        </div>
+
+        <!-- Impact Strip (§4.1) -->
+        <div class="impact-strip">
+          <div class="impact-item">
+            <div class="impact-icon green">
+              <i class="fa-solid fa-bowl-food"></i>
+            </div>
+            <div>
+              <div class="impact-value" id="stripMeals">14,280+</div>
+              <div class="impact-label">Meals rescued so far</div>
+            </div>
+          </div>
+          <div class="impact-item">
+            <div class="impact-icon orange">
+              <i class="fa-solid fa-scale-balanced"></i>
+            </div>
+            <div>
+              <div class="impact-value" id="stripWaste">5,710 kg</div>
+              <div class="impact-label">Food waste avoided</div>
+            </div>
+          </div>
+          <div class="impact-item">
+            <div class="impact-icon green">
+              <i class="fa-solid fa-city"></i>
+            </div>
+            <div>
+              <div class="impact-value" id="stripCommunities">42</div>
+              <div class="impact-label">Communities fed</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- How It Works (§4.1) -->
+        <div class="how-it-works-section">
+          <div class="section-header">
+            <h2 class="section-title">How PlateShare Works</h2>
+            <p class="section-subtitle">
+              A simple, transparent process connecting kitchen surplus to people
+              in need.
+            </p>
+          </div>
+          <div class="three-column-grid">
+            <div class="info-card">
+              <div class="step-num-badge">
+                <i class="fa-solid fa-utensils"></i>
+              </div>
+              <h3 class="card-heading">Share surplus</h3>
+              <p class="card-desc">
+                Tell us what food you have, when it was prepared, and how much.
+                Post in under 60 seconds with food safety details.
+              </p>
+            </div>
+            <div class="info-card">
+              <div class="step-num-badge">
+                <i class="fa-solid fa-route"></i>
+              </div>
+              <h3 class="card-heading">Match with those in need</h3>
+              <p class="card-desc">
+                NGOs and nearby communities see your listing in real time, claim
+                it, and coordinate swift zero-delay pickup.
+              </p>
+            </div>
+            <div class="info-card">
+              <div class="step-num-badge">
+                <i class="fa-solid fa-chart-line"></i>
+              </div>
+              <h3 class="card-heading">Track impact</h3>
+              <p class="card-desc">
+                See how many meals were rescued, food safety verified via OTP,
+                and how much waste you prevented.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- VIEW 2: DONOR DASHBOARD (§4.3) -->
+      <section id="view-donor-dashboard" class="view-section">
+        <div class="dashboard-header">
+          <div>
+            <h2 class="dashboard-title">Donor Dashboard</h2>
+            <p class="text-muted">Thanks for sharing your extra meals today.</p>
+          </div>
+          <button
+            class="btn btn-orange"
+            onclick="App.navigateTo('create-donation')"
+          >
+            <i class="fa-solid fa-plus"></i> Share Surplus Food
+          </button>
+        </div>
+
+        <!-- Main Action Card (§4.3) -->
+        <div class="action-card">
+          <div class="action-card-text">
+            <h3>Share surplus food</h3>
+            <p>
+              Post what you have in under a minute. Alert nearby NGOs before
+              food loses its freshness.
+            </p>
+          </div>
+          <button
+            class="btn btn-orange btn-lg"
+            onclick="App.navigateTo('create-donation')"
+          >
+            <i class="fa-solid fa-circle-plus"></i> Create Donation
+          </button>
+        </div>
+
+        <!-- Quick Stats 3 Cards (§4.3) -->
+        <div class="stats-grid">
+          <div class="stat-box highlight">
+            <div class="stat-box-num" id="donorStatMeals">345</div>
+            <div class="stat-box-label">
+              <i
+                class="fa-solid fa-bowl-food"
+                style="color: var(--color-safe); margin-right: 4px"
+              ></i>
+              Meals Donated
+            </div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-num" id="donorStatClaimed">4</div>
+            <div class="stat-box-label">
+              <i
+                class="fa-solid fa-handshake"
+                style="color: var(--color-forest-green); margin-right: 4px"
+              ></i>
+              Times Claimed
+            </div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-num" id="donorStatKg">155 kg</div>
+            <div class="stat-box-label">
+              <i
+                class="fa-solid fa-weight-hanging"
+                style="color: var(--color-warm-orange); margin-right: 4px"
+              ></i>
+              Food Rescued
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Donations Feed (§4.3) -->
+        <h3 style="font-size: 1.35rem; margin-bottom: 14px">
+          Your Active & Recent Food Donations
+        </h3>
+        <div class="cards-grid" id="donorDonationsFeed">
+          <!-- Injected dynamically via App.renderDonorDashboard -->
+        </div>
+
+        <!-- Tips Section (§4.3) -->
+        <div class="tips-box">
+          <div class="tips-icon"><i class="fa-solid fa-lightbulb"></i></div>
+          <div class="tips-content">
+            <h4>Tips to reduce food waste & speed up pickup</h4>
+            <ul>
+              <li>
+                <strong>Post early:</strong> Share surplus 1 to 2 hours before
+                the event ends to give volunteers time to mobilize.
+              </li>
+              <li>
+                <strong>Keep it warm:</strong> Hot foods must stay above 65°C in
+                insulated containers for safe handover.
+              </li>
+              <li>
+                <strong>Clear pickup instructions:</strong> Mention gate
+                numbers, landmarks, and contact numbers to avoid delays.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: CREATE DONATION (§4.4) -->
+      <section id="view-create-donation" class="view-section">
+        <div class="form-container">
+          <div class="form-header">
+            <h2 style="font-size: 1.85rem; margin-bottom: 6px">
+              Share your surplus food
+            </h2>
+            <p class="text-muted">
+              Fill in details about the food. Verified NGOs and community groups
+              will be alerted instantly.
+            </p>
+          </div>
+
+          <form id="createDonationForm">
+            <div class="form-group">
+              <label class="form-label">Food Name *</label>
+              <input
+                type="text"
+                class="form-control"
+                id="foodNameInput"
+                placeholder="e.g. Vegetarian Thali, Paneer Curry & Rice"
+                required
+                value="Vegetarian Thali"
+              />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Food Type *</label>
+                <select class="form-control" id="foodTypeSelect" required>
+                  <option value="Vegetarian">Vegetarian</option>
+                  <option value="Non-vegetarian">Non-vegetarian</option>
+                  <option value="Vegan">Vegan</option>
+                  <option value="Mixed">Mixed Feast</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category *</label>
+                <select class="form-control" id="foodCategorySelect" required>
+                  <option value="Cooked meal">Cooked meal</option>
+                  <option value="Snacks">Snacks</option>
+                  <option value="Bakery">Bakery</option>
+                  <option value="Raw ingredients">Raw ingredients</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Quantity *</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="foodQtyInput"
+                  min="1"
+                  value="100"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Unit *</label>
+                <select class="form-control" id="foodUnitSelect" required>
+                  <option value="meals">meals</option>
+                  <option value="kg">kg</option>
+                  <option value="pieces">pieces / packs</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Preparation Time *</label>
+                <input
+                  type="datetime-local"
+                  class="form-control"
+                  id="foodPrepInput"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Expiry / Best Before Time *</label>
+                <input
+                  type="datetime-local"
+                  class="form-control"
+                  id="foodExpiryInput"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Storage Method & Temperature *</label>
+              <input
+                type="text"
+                class="form-control"
+                id="foodStorageInput"
+                placeholder="e.g. Thermal insulated chafing dishes, hot-holding >65°C"
+                value="Hot insulated containers at >65°C"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Allergens & Notes (Optional)</label>
+              <textarea
+                class="form-control"
+                id="foodAllergensInput"
+                rows="2"
+                placeholder="e.g. Contains nuts or dairy; Prepared in pure vegetarian kitchen."
+              >
+Contains dairy (ghee/paneer). No peanuts.</textarea
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Pickup Location & Instructions *</label>
+              <div class="form-row" style="margin-bottom: 12px">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="foodLocationName"
+                  placeholder="Venue / Kitchen name"
+                  value="Grand Hyatt Convention Banquet"
+                />
+                <input
+                  type="text"
+                  class="form-control"
+                  id="foodLocationAddress"
+                  placeholder="Full pickup address"
+                  value="Plot 4, Bandra Kurla Complex, Mumbai"
+                />
+              </div>
+              <textarea
+                class="form-control"
+                id="foodInstructionsInput"
+                rows="2"
+                placeholder="e.g. Use service gate 3 near loading dock. Ask for Raj at security."
+              >
+Use service entrance gate 3 near loading dock. Ask for Chef Raj at kitchen dispatch.</textarea
+              >
+            </div>
+
+            <!-- Photo Selection (§4.4) -->
+            <div class="form-group">
+              <label class="form-label"
+                >Food Photo (Choose visual match or upload)</label
+              >
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                  gap: 10px;
+                "
+                id="presetPhotosGrid"
+              >
+                <!-- Rendered dynamically -->
+              </div>
+              <input
+                type="hidden"
+                id="selectedPhotoUrl"
+                value="https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&w=800&q=80"
+              />
+            </div>
+
+            <!-- Real-Time Preview Box (§4.4) -->
+            <div class="preview-box">
+              <div class="preview-box-header">
+                <span>HOW THIS WILL LOOK TO NGOS & VOLUNTEERS</span>
+                <span id="previewUrgencyBadge" class="badge badge-safe"
+                  >Safe</span
+                >
+              </div>
+              <div style="display: flex; gap: 16px; align-items: center">
+                <img
+                  id="previewImg"
+                  src="https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&w=800&q=80"
+                  alt="Preview"
+                  style="
+                    width: 70px;
+                    height: 70px;
+                    border-radius: 8px;
+                    object-fit: cover;
+                  "
+                />
+                <div>
+                  <h4
+                    id="previewTitle"
+                    style="font-size: 1.05rem; margin-bottom: 4px"
+                  >
+                    Vegetarian Thali (100 meals)
+                  </h4>
+                  <p style="font-size: 0.85rem; color: #7a756c">
+                    Type: <strong id="previewFoodType">Vegetarian</strong> ·
+                    Visibility:
+                    <strong>NGOs first, then community if unclaimed</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              class="btn btn-orange btn-lg"
+              style="width: 100%"
+            >
+              <i class="fa-solid fa-paper-plane"></i> Post Donation
+            </button>
+            <p
+              style="
+                text-align: center;
+                font-size: 0.85rem;
+                color: #7a756c;
+                margin-top: 10px;
+              "
+            >
+              You can edit or remove this anytime before it's claimed.
+            </p>
+          </form>
+        </div>
+      </section>
+      <!-- VIEW 4: NGO DASHBOARD / MAIN FEED (§4.6) -->
+      <section id="view-ngo-feed" class="view-section">
+        <div class="dashboard-header">
+          <div>
+            <h2 class="dashboard-title">Available Surplus Food Feed</h2>
+            <p class="text-muted">
+              Find safe, nearby meals for your community.
+            </p>
+          </div>
+        </div>
+
+        <!-- Search & Filters (§4.6) -->
+        <div class="filter-bar">
+          <div class="search-input-wrapper">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input
+              type="text"
+              id="ngoSearchInput"
+              class="form-control"
+              placeholder="Search by food type or area (e.g. Biryani, Bandra, Thali)..."
+            />
+          </div>
+          <button class="filter-chip ngo-filter-chip active" data-filter="all">
+            <i class="fa-solid fa-layer-group"></i> All Items
+          </button>
+          <button class="filter-chip ngo-filter-chip" data-filter="vegetarian">
+            <i class="fa-solid fa-seedling"></i> Vegetarian
+          </button>
+          <button class="filter-chip ngo-filter-chip" data-filter="nonveg">
+            <i class="fa-solid fa-drumstick-bite"></i> Non-vegetarian
+          </button>
+          <button class="filter-chip ngo-filter-chip" data-filter="nearby">
+            <i class="fa-solid fa-location-arrow"></i> Within 2 km
+          </button>
+          <button class="filter-chip ngo-filter-chip" data-filter="urgent">
+            <i class="fa-solid fa-bolt" style="color: var(--color-urgent)"></i>
+            Urgent First
+          </button>
+        </div>
+
+        <!-- Feed Grid (§4.6) -->
+        <div class="cards-grid" id="ngoFeedContainer">
+          <!-- Injected via App.renderNGOFeed -->
+        </div>
+      </section>
+
+      <!-- VIEW 5: COMMUNITY VIEW (§4.8) -->
+      <section id="view-community-feed" class="view-section">
+        <div class="dashboard-header">
+          <div>
+            <h2 class="dashboard-title">Community Meal Distribution</h2>
+            <p class="text-muted">
+              Meals available for local communities and direct pickup.
+            </p>
+          </div>
+        </div>
+
+        <div
+          style="
+            background: #fff9ee;
+            border: 1px solid #eadbba;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            font-size: 0.92rem;
+            color: #8c590e;
+          "
+        >
+          <i class="fa-solid fa-circle-info" style="margin-right: 6px"></i>
+          <strong>Community Rescue:</strong> These meals are available for local
+          community volunteers, families, and micro-shelters for immediate
+          direct collection.
+        </div>
+
+        <div class="cards-grid" id="communityFeedContainer">
+          <!-- Injected via App.renderCommunityFeed -->
+        </div>
+      </section>
+
+      <!-- VIEW 6: DONATION DETAIL PAGE (§4.5 & §4.7) -->
+      <section id="view-donation-detail" class="view-section">
+        <button
+          class="btn btn-sm btn-outline-green"
+          style="margin-bottom: 20px"
+          onclick="App.navigateTo('ngo-feed')"
+        >
+          <i class="fa-solid fa-arrow-left"></i> Back to Listings
+        </button>
+
+        <div class="detail-layout">
+          <!-- Main Info -->
+          <div class="detail-main">
+            <div
+              style="
+                position: relative;
+                height: 320px;
+                border-radius: 14px;
+                overflow: hidden;
+                margin-bottom: 24px;
+              "
+            >
+              <img
+                id="detailImage"
+                src=""
+                alt="Food"
+                style="width: 100%; height: 100%; object-fit: cover"
+              />
+              <div
+                style="
+                  position: absolute;
+                  top: 16px;
+                  left: 16px;
+                  display: flex;
+                  gap: 8px;
+                "
+              >
+                <span id="detailUrgencyBadge" class="badge"></span>
+                <span id="detailFoodTypeBadge" class="badge badge-gray"></span>
+                <span id="detailCategoryBadge" class="badge badge-gray"></span>
+              </div>
+            </div>
+
+            <h1
+              id="detailTitle"
+              style="font-size: 2.2rem; margin-bottom: 12px"
+            ></h1>
+
+            <!-- Status Stepper (§4.5 & §4.7) -->
+            <div class="stepper-container">
+              <div class="stepper-header">
+                <i class="fa-solid fa-list-check" style="margin-right: 6px"></i>
+                Food Rescue Progress Stepper
+              </div>
+              <div class="stepper-track" id="stepperTrack">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Food Safety Passport (§4.5) -->
+            <div class="passport-card">
+              <div class="passport-header">
+                <i
+                  class="fa-solid fa-shield-halved"
+                  style="font-size: 1.4rem; color: var(--color-forest-green)"
+                ></i>
+                <h4>Food Safety Passport (Verified)</h4>
+              </div>
+              <div class="passport-grid">
+                <div class="passport-item">
+                  <span class="passport-label">Prepared Time</span>
+                  <span class="passport-value" id="passportPrepTime"
+                    >8:00 PM</span
+                  >
+                </div>
+                <div class="passport-item">
+                  <span class="passport-label">Safe Until</span>
+                  <span class="passport-value" id="passportSafeUntil"
+                    >10:30 PM</span
+                  >
+                </div>
+                <div class="passport-item">
+                  <span class="passport-label">Storage Method</span>
+                  <span class="passport-value" id="passportStorage"
+                    >Hot containers >65°C</span
+                  >
+                </div>
+                <div class="passport-item">
+                  <span class="passport-label">Allergens / Ingredients</span>
+                  <span class="passport-value" id="passportAllergens"
+                    >Contains dairy</span
+                  >
+                </div>
+                <div class="passport-item">
+                  <span class="passport-label">Packaging Standard</span>
+                  <span class="passport-value" id="passportPackaging"
+                    >Eco food-grade containers</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Fallback Box for Unclaimed Listings (§4.5) -->
+            <div
+              class="fallback-warning"
+              id="detailFallbackBox"
+              style="display: none"
+            >
+              <div class="fallback-warning-text">
+                <h4>
+                  <i
+                    class="fa-solid fa-triangle-exclamation"
+                    style="margin-right: 6px"
+                  ></i>
+                  No NGO has claimed this yet
+                </h4>
+                <p>
+                  Would you like to offer this directly to nearby community
+                  volunteers?
+                </p>
+              </div>
+              <div style="display: flex; gap: 10px">
+                <button
+                  class="btn btn-orange btn-sm"
+                  onclick="App.toggleCommunityFallback(App.activeDetailId)"
+                >
+                  <i class="fa-solid fa-bullhorn"></i> Offer to Community
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar: Location, OTP & Handover -->
+          <div class="detail-sidebar">
+            <!-- OTP & Handover Actions (§4.5) -->
+            <div class="otp-box" id="detailOtpContainer" style="display: none">
+              <span
+                style="
+                  font-size: 0.85rem;
+                  font-weight: 700;
+                  color: #4b8b5e;
+                  text-transform: uppercase;
+                "
+                ><i class="fa-solid fa-key" style="margin-right: 4px"></i>
+                Handover Verification OTP</span
+              >
+              <div class="otp-code" id="detailOtpCode">----</div>
+              <p
+                style="font-size: 0.82rem; color: #7a756c; margin-bottom: 12px"
+              >
+                Share this OTP with the donor upon pickup to confirm safe
+                custody transfer.
+              </p>
+              <div
+                id="detailClaimedInfo"
+                style="
+                  font-size: 0.85rem;
+                  text-align: left;
+                  background: #fff;
+                  padding: 10px;
+                  border-radius: 8px;
+                  border: 1px solid #d8ead9;
+                  margin-bottom: 12px;
+                "
+              ></div>
+            </div>
+
+            <div id="detailActionButtons">
+              <!-- Dynamic claim & stepper advance buttons -->
+            </div>
+
+            <!-- Interactive Location & Map preview (§4.5) -->
+            <div class="stat-box" style="padding: 22px">
+              <h4 style="margin-bottom: 10px">
+                <i
+                  class="fa-solid fa-location-dot"
+                  style="color: var(--color-forest-green); margin-right: 4px"
+                ></i>
+                Pickup Location
+              </h4>
+              <p
+                style="font-weight: 700; margin-bottom: 4px"
+                id="detailLocationName"
+              ></p>
+              <p
+                class="text-muted"
+                style="font-size: 0.9rem; margin-bottom: 14px"
+                id="detailAddress"
+              ></p>
+
+              <div class="map-container">
+                <!-- Illustrated SVG Map Mockup -->
+                <svg
+                  class="map-svg-bg"
+                  viewBox="0 0 400 240"
+                  preserveAspectRatio="none"
+                >
+                  <rect width="400" height="240" fill="#E6EDE8" />
+                  <path
+                    d="M-10 60 Q 120 80 200 40 T 410 90"
+                    stroke="#CBDDD1"
+                    stroke-width="18"
+                    fill="none"
+                  />
+                  <path
+                    d="M40 250 Q 80 140 180 130 T 360 40"
+                    stroke="#CBDDD1"
+                    stroke-width="22"
+                    fill="none"
+                  />
+                  <path
+                    d="M120 -10 Q 140 110 280 180 T 420 220"
+                    stroke="#FFF"
+                    stroke-width="10"
+                    fill="none"
+                  />
+                  <path
+                    d="M-10 160 Q 150 140 260 210 T 410 180"
+                    stroke="#FFF"
+                    stroke-width="8"
+                    fill="none"
+                  />
+                </svg>
+                <div class="map-pin-badge">
+                  <i class="fa-solid fa-location-dot"></i>
+                  <span>Dispatch Point</span>
+                </div>
+              </div>
+
+              <div style="margin-top: 16px">
+                <h5
+                  style="font-size: 0.88rem; color: #3a3630; margin-bottom: 4px"
+                >
+                  Pickup Instructions:
+                </h5>
+                <p
+                  style="font-size: 0.85rem; color: #7a756c"
+                  id="detailPickupInstructions"
+                ></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- VIEW 7: IMPACT / STATS PAGE (§4.10) -->
+      <section id="view-impact" class="view-section">
+        <div class="dashboard-header">
+          <div>
+            <h2 class="dashboard-title">Our Impact So Far</h2>
+            <p class="text-muted">
+              Every meal you see here was saved from being thrown away and
+              served to someone in need.
+            </p>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-box highlight">
+            <div class="stat-box-num" id="impactMealsVal">14,280+</div>
+            <div class="stat-box-label">Meals Rescued</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-num" id="impactPeopleVal">16,420</div>
+            <div class="stat-box-label">People Fed</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-num" id="impactWasteVal">5,990 kg</div>
+            <div class="stat-box-label">Food Waste Avoided</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-num">68</div>
+            <div class="stat-box-label">Active Donor Partners & NGOs</div>
+          </div>
+        </div>
+
+        <!-- Rescued Meals Chart (§4.10) -->
+        <div class="impact-chart-box">
+          <h3 style="font-size: 1.25rem; margin-bottom: 6px">
+            Rescued Meals Per Day (This Week)
+          </h3>
+          <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 20px">
+            Daily tracking of surplus meals distributed across partner shelters.
+          </p>
+          <div class="chart-bars-container">
+            <div class="chart-bar-col">
+              <div class="chart-bar-fill" style="height: 55%">
+                <span class="chart-bar-val">1.2k</span>
+              </div>
+              <span class="chart-bar-label">Mon</span>
+            </div>
+            <div class="chart-bar-col">
+              <div class="chart-bar-fill" style="height: 70%">
+                <span class="chart-bar-val">1.8k</span>
+              </div>
+              <span class="chart-bar-label">Tue</span>
+            </div>
+            <div class="chart-bar-col">
+              <div class="chart-bar-fill" style="height: 85%">
+                <span class="chart-bar-val">2.2k</span>
+              </div>
+              <span class="chart-bar-label">Wed</span>
+            </div>
+            <div class="chart-bar-col">
+              <div class="chart-bar-fill" style="height: 60%">
+                <span class="chart-bar-val">1.5k</span>
+              </div>
+              <span class="chart-bar-label">Thu</span>
+            </div>
+            <div class="chart-bar-col">
+              <div class="chart-bar-fill" style="height: 95%">
+                <span class="chart-bar-val">2.8k</span>
+              </div>
+              <span class="chart-bar-label">Fri</span>
+            </div>
+            <div class="chart-bar-col">
+              <div class="chart-bar-fill" style="height: 100%">
+                <span class="chart-bar-val">3.1k</span>
+              </div>
+              <span class="chart-bar-label">Sat</span>
+            </div>
+            <div class="chart-bar-col">
+              <div class="chart-bar-fill" style="height: 90%">
+                <span class="chart-bar-val">2.6k</span>
+              </div>
+              <span class="chart-bar-label">Sun</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          style="
+            background: #fff;
+            border: 1px solid #e8e2d5;
+            border-radius: 14px;
+            padding: 28px;
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+          "
+        >
+          <p
+            style="
+              font-size: 1.15rem;
+              font-style: italic;
+              color: #1f4d36;
+              margin-bottom: 8px;
+            "
+          >
+            "The food that would have ended up in a dumpster fed over 300
+            children in our community center tonight. PlateShare changed
+            everything for us."
+          </p>
+          <span style="font-size: 0.85rem; color: #7a756c"
+            >— Anita D., Community Outreach Coordinator</span
+          >
+        </div>
+      </section>
+    </main>
+
+    <!-- Login / Sign-up Modal (§4.2) -->
+    <div class="modal-overlay" id="loginModal">
+      <div class="modal-card">
+        <button class="modal-close-btn" id="closeLoginBtn">&times;</button>
+        <div
+          style="
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e8e2d5;
+            padding-bottom: 12px;
+          "
+        >
+          <button class="btn btn-sm btn-outline-green active" id="authTabLogin">
+            Log In
+          </button>
+          <button class="btn btn-sm btn-outline-green" id="authTabSignup">
+            Create Account
+          </button>
+        </div>
+
+        <h3 id="authModalTitle" style="font-size: 1.5rem; margin-bottom: 6px">
+          Welcome back
+        </h3>
+        <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 20px">
+          Join the community food-rescue network.
+        </p>
+
+        <form id="authForm">
+          <div class="form-group">
+            <label class="form-label">Full Name or Business Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="authNameInput"
+              placeholder="e.g. Grand Hyatt Banquet / Robin Hood Army"
+              required
+              value="Grand Hyatt Banquet"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input
+              type="email"
+              class="form-control"
+              id="authEmailInput"
+              placeholder="name@example.com"
+              required
+              value="kitchen@hyatt.com"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input
+              type="password"
+              class="form-control"
+              placeholder="••••••••"
+              required
+              value="demo1234"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">I am joining as a:</label>
+            <select class="form-control" id="authRoleSelect">
+              <option value="donor">
+                Food Donor (Restaurant / Hotel / Event Host)
+              </option>
+              <option value="ngo">NGO / Food Rescue Organization</option>
+              <option value="community">Community Volunteer / Resident</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            class="btn btn-orange btn-lg"
+            style="width: 100%; margin-top: 8px"
+            id="authSubmitBtn"
+          >
+            Continue
+          </button>
+
+          <p
+            style="
+              text-align: center;
+              font-size: 0.8rem;
+              color: #7a756c;
+              margin-top: 16px;
+            "
+          >
+            By continuing, you agree to use food safely and responsibly.
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Floating Chatbot Assistant (§4.9) -->
+    <button
+      class="chatbot-toggle-btn"
+      id="chatbotToggleBtn"
+      aria-label="Open PlateShare Assistant"
+      title="PlateShare Assistant"
+    >
+      <i
+        class="fa-solid fa-comment-dots"
+        style="font-size: 1.5rem; color: #fff"
+      ></i>
+    </button>
+
+    <div class="chatbot-window" id="chatbotWindow">
+      <div class="chatbot-header">
+        <div class="chatbot-header-title">
+          <span
+            ><i
+              class="fa-solid fa-leaf"
+              style="color: #8ad4a2; margin-right: 6px"
+            ></i>
+            PlateShare Assistant</span
+          >
+        </div>
+        <button class="chatbot-close-btn" id="chatbotCloseBtn">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="chatbot-messages" id="chatbotMessages">
+        <div class="chat-bubble bot">
+          Hello! I'm your PlateShare Assistant. I can help you share extra food,
+          coordinate NGO pickups, or check food safety guidelines.
+        </div>
+      </div>
+
+      <!-- Suggestion Chips (§4.9) -->
+      <div class="chat-suggestion-chips">
+        <button class="chip-btn chat-chip" data-query="Help me post a donation">
+          <i class="fa-solid fa-plus-circle"></i> Post a donation
+        </button>
+        <button class="chip-btn chat-chip" data-query="Find meals near me">
+          <i class="fa-solid fa-magnifying-glass"></i> Find meals
+        </button>
+        <button class="chip-btn chat-chip" data-query="Show my impact">
+          <i class="fa-solid fa-chart-line"></i> Show impact
+        </button>
+        <button class="chip-btn chat-chip" data-query="Food safety rules">
+          <i class="fa-solid fa-shield-halved"></i> Food safety
+        </button>
+      </div>
+
+      <div class="chatbot-input-bar">
+        <input
+          type="text"
+          id="chatbotInput"
+          placeholder="Ask a question..."
+          autocomplete="off"
+        />
+        <button class="chatbot-send-btn" id="chatbotSendBtn">
+          <i class="fa-solid fa-paper-plane" style="font-size: 0.85rem"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer (§4.1) -->
+    <footer class="site-footer">
+      <div class="footer-links">
+        <a href="#landing" data-view-target="landing">About</a>
+        <a href="#landing" data-view-target="landing">How it works</a>
+        <a href="#impact" data-view-target="impact">Impact</a>
+        <a
+          href="#"
+          onclick="
+            alert('Contact: support@plateshare.org | Helpline: 1800-FOOD-SAVE')
+          "
+          >Contact</a
+        >
+      </div>
+      <p class="footer-tagline">
+        Built to reduce food spoilage and support communities.
+      </p>
+    </footer>
+
+    <!-- App Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

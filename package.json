@@ -1,0 +1,9 @@
+{
+  "name": "plateshare",
+  "version": "1.0.0",
+  "description": "A warm, community-first food-rescue platform.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
