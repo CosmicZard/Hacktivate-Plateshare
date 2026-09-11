@@ -8,7 +8,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
-    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/styles.css?v=2.0" />
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>"
@@ -46,30 +46,12 @@
             ></i>
             Dashboard</a
           >
-          <a
-            href="#create-donation"
-            data-view-target="create-donation"
-            class="nav-donor-only"
-            style="display: none"
-            ><i
-              class="fa-solid fa-plus-circle"
-              style="font-size: 0.82rem; margin-right: 4px"
-            ></i>
-            Post Donation</a
-          >
-          <a href="#ngo-feed" data-view-target="ngo-feed"
+          <a href="#ngo-feed" data-view-target="ngo-feed" id="navFindMealsLink"
             ><i
               class="fa-solid fa-utensils"
               style="font-size: 0.82rem; margin-right: 4px"
             ></i>
             Find Meals</a
-          >
-          <a href="#community-feed" data-view-target="community-feed"
-            ><i
-              class="fa-solid fa-users"
-              style="font-size: 0.82rem; margin-right: 4px"
-            ></i>
-            Community</a
           >
           <a href="#impact" data-view-target="impact"
             ><i
@@ -273,27 +255,12 @@
             <p class="text-muted">Thanks for sharing your extra meals today.</p>
           </div>
           <button
-            class="btn btn-orange"
-            onclick="App.navigateTo('create-donation')"
-          >
-            <i class="fa-solid fa-plus"></i> Share Surplus Food
-          </button>
-        </div>
-
-        <!-- Main Action Card (§4.3) -->
-        <div class="action-card">
-          <div class="action-card-text">
-            <h3>Share surplus food</h3>
-            <p>
-              Post what you have in under a minute. Alert nearby NGOs before
-              food loses its freshness.
-            </p>
-          </div>
-          <button
             class="btn btn-orange btn-lg"
             onclick="App.navigateTo('create-donation')"
+            id="donorPostDonationBtn"
+            style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600;"
           >
-            <i class="fa-solid fa-circle-plus"></i> Create Donation
+            <i class="fa-solid fa-plus-circle"></i> Post Donation
           </button>
         </div>
 
@@ -388,26 +355,14 @@
               />
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Food Type *</label>
-                <select class="form-control" id="foodTypeSelect" required>
-                  <option value="Vegetarian">Vegetarian</option>
-                  <option value="Non-vegetarian">Non-vegetarian</option>
-                  <option value="Vegan">Vegan</option>
-                  <option value="Mixed">Mixed Feast</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Category *</label>
-                <select class="form-control" id="foodCategorySelect" required>
-                  <option value="Cooked meal">Cooked meal</option>
-                  <option value="Snacks">Snacks</option>
-                  <option value="Bakery">Bakery</option>
-                  <option value="Raw ingredients">Raw ingredients</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
+            <div class="form-group">
+              <label class="form-label">Food Type *</label>
+              <select class="form-control" id="foodTypeSelect" required>
+                <option value="Vegetarian">Vegetarian</option>
+                <option value="Non-vegetarian">Non-vegetarian</option>
+                <option value="Vegan">Vegan</option>
+                <option value="Mixed">Mixed Feast</option>
+              </select>
             </div>
 
             <div class="form-row">
@@ -454,30 +409,20 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">Storage Method & Temperature *</label>
-              <input
-                type="text"
-                class="form-control"
-                id="foodStorageInput"
-                placeholder="e.g. Thermal insulated chafing dishes, hot-holding >65°C"
-                value="Hot insulated containers at >65°C"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Allergens & Notes (Optional)</label>
-              <textarea
-                class="form-control"
-                id="foodAllergensInput"
-                rows="2"
-                placeholder="e.g. Contains nuts or dairy; Prepared in pure vegetarian kitchen."
-              >
-Contains dairy (ghee/paneer). No peanuts.</textarea
-              >
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Pickup Location & Instructions *</label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label class="form-label" style="margin-bottom: 0;">Pickup Location & Instructions *</label>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-green"
+                  id="getRealtimeLocationBtn"
+                  style="font-size: 0.8rem; padding: 5px 12px; border-radius: var(--radius-full);"
+                >
+                  <i class="fa-solid fa-location-crosshairs"></i> Get My Real-time Location
+                </button>
+              </div>
+              <div id="realtimeLocationStatus" style="display: none; font-size: 0.82rem; color: var(--color-forest-green); margin-bottom: 8px; font-weight: 600;">
+                <i class="fa-solid fa-circle-check"></i> <span id="realtimeCoordsText">Real-time GPS detected</span>
+              </div>
               <div class="form-row" style="margin-bottom: 12px">
                 <input
                   type="text"
@@ -499,16 +444,35 @@ Contains dairy (ghee/paneer). No peanuts.</textarea
                 id="foodInstructionsInput"
                 rows="2"
                 placeholder="e.g. Use service gate 3 near loading dock. Ask for Raj at security."
-              >
-Use service entrance gate 3 near loading dock. Ask for Chef Raj at kitchen dispatch.</textarea
-              >
+              >Use service entrance gate 3 near loading dock. Ask for Chef Raj at kitchen dispatch.</textarea>
+              
+              <!-- Realtime Map Image Preview -->
+              <div class="map-container" style="height: 160px; margin-top: 14px;">
+                <img src="images/map-location.jpg" class="map-img-bg" id="createMapImage" alt="Realtime Location Map" />
+                <div class="map-pin-badge" id="createMapBadge">
+                  <i class="fa-solid fa-location-dot" style="color: #ef4444;"></i>
+                  <span id="createMapBadgeText">Grand Hyatt (19.0657, 72.8687)</span>
+                </div>
+              </div>
             </div>
 
-            <!-- Photo Selection (§4.4) -->
+            <!-- Photo Selection with Upload Option (§4.4) -->
             <div class="form-group">
-              <label class="form-label"
-                >Food Photo (Choose visual match or upload)</label
-              >
+              <label class="form-label">Food Photo *</label>
+              
+              <!-- Direct File Upload Box -->
+              <div style="border: 2px dashed #CBDDD1; border-radius: var(--radius-md); padding: 18px; text-align: center; background: #fafaf8; margin-bottom: 12px;">
+                <input type="file" id="foodPhotoFileInput" accept="image/*" style="display: none;" />
+                <button type="button" class="btn btn-outline-orange" id="triggerPhotoUploadBtn">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Upload Food Image / Camera
+                </button>
+                <div id="uploadPhotoSuccessText" style="display: none; margin-top: 8px; font-size: 0.85rem; color: var(--color-forest-green); font-weight: 600;">
+                  <i class="fa-solid fa-check-circle"></i> <span id="uploadedFileName">Custom photo uploaded</span>
+                </div>
+                <p class="text-muted" style="font-size: 0.8rem; margin-top: 6px; margin-bottom: 0;">Upload image from your device or take a live picture</p>
+              </div>
+
+              <div style="font-size: 0.85rem; color: #7a756c; font-weight: 600; margin-bottom: 8px;">Or pick a matching preset photo:</div>
               <div
                 style="
                   display: grid;
@@ -852,41 +816,10 @@ Use service entrance gate 3 near loading dock. Ask for Chef Raj at kitchen dispa
               ></p>
 
               <div class="map-container">
-                <!-- Illustrated SVG Map Mockup -->
-                <svg
-                  class="map-svg-bg"
-                  viewBox="0 0 400 240"
-                  preserveAspectRatio="none"
-                >
-                  <rect width="400" height="240" fill="#E6EDE8" />
-                  <path
-                    d="M-10 60 Q 120 80 200 40 T 410 90"
-                    stroke="#CBDDD1"
-                    stroke-width="18"
-                    fill="none"
-                  />
-                  <path
-                    d="M40 250 Q 80 140 180 130 T 360 40"
-                    stroke="#CBDDD1"
-                    stroke-width="22"
-                    fill="none"
-                  />
-                  <path
-                    d="M120 -10 Q 140 110 280 180 T 420 220"
-                    stroke="#FFF"
-                    stroke-width="10"
-                    fill="none"
-                  />
-                  <path
-                    d="M-10 160 Q 150 140 260 210 T 410 180"
-                    stroke="#FFF"
-                    stroke-width="8"
-                    fill="none"
-                  />
-                </svg>
-                <div class="map-pin-badge">
-                  <i class="fa-solid fa-location-dot"></i>
-                  <span>Dispatch Point</span>
+                <img src="images/map-location.jpg" class="map-img-bg" id="detailMapImage" alt="Pickup Map Location" />
+                <div class="map-pin-badge" id="detailMapBadge">
+                  <i class="fa-solid fa-location-dot" style="color: #ef4444;"></i>
+                  <span id="detailMapBadgeText">Dispatch Point</span>
                 </div>
               </div>
 
@@ -1203,7 +1136,7 @@ Use service entrance gate 3 near loading dock. Ask for Chef Raj at kitchen dispa
     </footer>
 
     <!-- App Scripts -->
-    <script src="js/data.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/data.js?v=2.0"></script>
+    <script src="js/app.js?v=2.0"></script>
   </body>
 </html>

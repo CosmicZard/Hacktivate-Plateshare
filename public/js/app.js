@@ -169,14 +169,27 @@ const App = {
       if (userBadge) userBadge.style.display = 'flex';
     }
 
+    // Toggle body role class for bulletproof CSS rules
+    document.body.classList.toggle('role-donor', this.currentRole === 'donor');
+    document.body.classList.toggle('role-ngo', this.currentRole === 'ngo');
+    document.body.classList.toggle('role-community', this.currentRole === 'community');
+
     document.querySelectorAll('.nav-donor-only').forEach(el => el.style.display = (this.currentRole === 'donor') ? 'inline-block' : 'none');
     document.querySelectorAll('.nav-ngo-only').forEach(el => el.style.display = (this.currentRole === 'ngo') ? 'inline-block' : 'none');
     document.querySelectorAll('.nav-community-only').forEach(el => el.style.display = (this.currentRole === 'community') ? 'inline-block' : 'none');
+
+    // Hide Find Meals from navbar when in donor mode or at donor page
+    const findMealsLink = document.getElementById('navFindMealsLink');
+    if (findMealsLink) {
+      findMealsLink.style.display = (this.currentRole === 'donor' || this.currentView === 'donor-dashboard') ? 'none' : 'inline-block';
+    }
   },
 
   navigateTo(viewId) {
     this.currentView = viewId;
     window.location.hash = (viewId === 'donation-detail') ? 'donation-detail/' + this.activeDetailId : viewId;
+
+    document.body.classList.toggle('view-donor-dashboard', viewId === 'donor-dashboard');
 
     document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
 
@@ -184,6 +197,12 @@ const App = {
     if (targetSection) {
       targetSection.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Hide Find Meals when navigating to donor dashboard
+    const findMealsLink = document.getElementById('navFindMealsLink');
+    if (findMealsLink) {
+      findMealsLink.style.display = (this.currentRole === 'donor' || viewId === 'donor-dashboard') ? 'none' : 'inline-block';
     }
 
     document.querySelectorAll('.nav-links a').forEach(a => {
@@ -370,7 +389,86 @@ const App = {
           item.classList.add('selected');
           document.getElementById('selectedPhotoUrl').value = item.getAttribute('data-url');
           document.getElementById('previewImg').src = item.getAttribute('data-url');
+          const uploadSuccessText = document.getElementById('uploadPhotoSuccessText');
+          if (uploadSuccessText) uploadSuccessText.style.display = 'none';
         });
+      });
+    }
+
+    // Direct Photo File Upload Handler
+    const photoFileInput = document.getElementById('foodPhotoFileInput');
+    const triggerPhotoBtn = document.getElementById('triggerPhotoUploadBtn');
+    const uploadSuccessText = document.getElementById('uploadPhotoSuccessText');
+    const uploadedFileName = document.getElementById('uploadedFileName');
+
+    if (triggerPhotoBtn && photoFileInput) {
+      triggerPhotoBtn.addEventListener('click', () => photoFileInput.click());
+      photoFileInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const dataUrl = event.target.result;
+            document.getElementById('selectedPhotoUrl').value = dataUrl;
+            document.getElementById('previewImg').src = dataUrl;
+            if (uploadSuccessText) uploadSuccessText.style.display = 'block';
+            if (uploadedFileName) uploadedFileName.textContent = 'Uploaded: ' + file.name;
+
+            if (photoGrid) {
+              photoGrid.querySelectorAll('.preset-photo-item').forEach(i => {
+                i.style.borderColor = '#E8E2D5';
+                i.classList.remove('selected');
+              });
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // Real-Time User GPS Geolocation Detection
+    const geoBtn = document.getElementById('getRealtimeLocationBtn');
+    const geoStatus = document.getElementById('realtimeLocationStatus');
+    const geoCoordsText = document.getElementById('realtimeCoordsText');
+    const createMapBadgeText = document.getElementById('createMapBadgeText');
+
+    if (geoBtn) {
+      geoBtn.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+          alert('Geolocation is not supported by your browser.');
+          return;
+        }
+        geoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Detecting GPS...';
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            this.userLocation = { lat, lng };
+
+            if (geoStatus) geoStatus.style.display = 'block';
+            if (geoCoordsText) geoCoordsText.textContent = `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`;
+            if (createMapBadgeText) createMapBadgeText.textContent = `Live GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+            const locName = document.getElementById('foodLocationName');
+            const locAddr = document.getElementById('foodLocationAddress');
+            if (locName) locName.value = 'My Current Kitchen / Dispatch Point';
+            if (locAddr) locAddr.value = `Verified GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+
+            geoBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Location Detected';
+            geoBtn.className = 'btn btn-sm btn-green';
+          },
+          (err) => {
+            console.warn('Geolocation fallback:', err);
+            const lat = 19.0760;
+            const lng = 72.8777;
+            this.userLocation = { lat, lng };
+            if (geoStatus) geoStatus.style.display = 'block';
+            if (geoCoordsText) geoCoordsText.textContent = `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E (Default)`;
+            if (createMapBadgeText) createMapBadgeText.textContent = `Default GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            geoBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Location Set';
+          },
+          { timeout: 8000, enableHighAccuracy: true }
+        );
       });
     }
 
@@ -378,27 +476,29 @@ const App = {
       e.preventDefault();
       const user = PlateStore.getCurrentUser();
       const selectedImg = document.getElementById('selectedPhotoUrl').value || PRESET_PHOTOS[0].url;
+      const userLat = (this.userLocation && this.userLocation.lat) ? this.userLocation.lat : 19.0760;
+      const userLng = (this.userLocation && this.userLocation.lng) ? this.userLocation.lng : 72.8777;
 
       const newDonation = {
         id: 'ps-' + Date.now(),
         title: nameInput.value + ' – ' + qtyInput.value + ' ' + unitSelect.value,
         foodType: typeSelect.value,
-        category: document.getElementById('foodCategorySelect').value,
+        category: 'Cooked meal',
         quantity: parseInt(qtyInput.value, 10) || 50,
         unit: unitSelect.value,
         prepTime: new Date(document.getElementById('foodPrepInput').value).toISOString(),
         expiryTime: new Date(expiryInput.value).toISOString(),
-        storageMethod: document.getElementById('foodStorageInput').value || 'Thermal insulated containers at >65°C',
-        allergens: document.getElementById('foodAllergensInput').value || 'No allergens specified',
+        storageMethod: 'Freshly packed container',
+        allergens: 'None reported',
         packagingTime: 'Packed fresh at dispatch',
         pickupInstructions: document.getElementById('foodInstructionsInput').value || 'Call on arrival at service entrance.',
         location: {
           name: document.getElementById('foodLocationName').value || 'Commercial Kitchen',
           address: document.getElementById('foodLocationAddress').value || '12 Express Way, Central',
-          lat: 19.0760,
-          lng: 72.8777
+          lat: userLat,
+          lng: userLng
         },
-        distance: '0.9 km away',
+        distance: '0.8 km away',
         donor: {
           name: user.name || 'Chef Partner',
           organization: user.org || 'Community Donor Partner',
@@ -607,6 +707,13 @@ const App = {
     document.getElementById('detailLocationName').textContent = item.location.name;
     document.getElementById('detailAddress').textContent = item.location.address;
     document.getElementById('detailPickupInstructions').textContent = item.pickupInstructions;
+
+    const mapBadgeText = document.getElementById('detailMapBadgeText');
+    if (mapBadgeText) {
+      const latStr = (item.location && item.location.lat) ? Number(item.location.lat).toFixed(4) : '19.0760';
+      const lngStr = (item.location && item.location.lng) ? Number(item.location.lng).toFixed(4) : '72.8777';
+      mapBadgeText.textContent = `${item.location.name} (${latStr}, ${lngStr})`;
+    }
 
     const badgeEl = document.getElementById('detailUrgencyBadge');
     badgeEl.className = 'badge ' + urgency.badgeClass;
