@@ -254,8 +254,234 @@ const PlateStore = {
     return remaining;
   },
 
+  REVIEWS_KEY: 'plateshare_reviews_v1',
+
+  getReviews(restaurantName) {
+    const raw = localStorage.getItem(this.REVIEWS_KEY);
+    let allReviews = [];
+    if (raw) {
+      try { allReviews = JSON.parse(raw); } catch (e) { allReviews = DEFAULT_REVIEWS; }
+    } else {
+      allReviews = DEFAULT_REVIEWS;
+      this.saveReviews(allReviews);
+    }
+    if (restaurantName) {
+      const target = restaurantName.toLowerCase().trim();
+      const filtered = allReviews.filter(r => r.restaurant.toLowerCase().includes(target) || target.includes(r.restaurant.toLowerCase()));
+      return filtered.length > 0 ? filtered : allReviews.slice(0, 3);
+    }
+    return allReviews;
+  },
+
+  saveReviews(reviews) {
+    localStorage.setItem(this.REVIEWS_KEY, JSON.stringify(reviews));
+  },
+
+  addReview(review) {
+    const reviews = this.getReviews();
+    reviews.unshift(review);
+    this.saveReviews(reviews);
+    return review;
+  },
+
   resetDefaults() {
     localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem(this.REVIEWS_KEY);
     return this.getDonations();
   }
 };
+
+const DEFAULT_REVIEWS = [
+  {
+    id: 'rev-1',
+    restaurant: 'Grand Hyatt Banquet Hall',
+    donorOrg: 'Grand Hyatt Banquet Hall',
+    reviewerName: 'Pooja Sharma',
+    reviewerType: 'ngo',
+    reviewerOrg: 'Robin Hood Army (Central Chapter)',
+    rating: 5,
+    date: 'Yesterday, 8:45 PM',
+    comment: 'Exceptional food quality and packaging! The vegetarian thalis were still piping hot upon pickup and fed over 120 individuals at our Dharavi shelter safely.',
+    foodTag: 'Hot Vegetarian Meals',
+    verifiedRescue: true
+  },
+  {
+    id: 'rev-2',
+    restaurant: 'Grand Hyatt Convention Banquet',
+    donorOrg: 'Grand Hyatt Banquet Hall',
+    reviewerName: 'Arjun Nair',
+    reviewerType: 'community',
+    reviewerOrg: 'Kalanagar Community Kitchen',
+    rating: 5,
+    date: '2 days ago',
+    comment: 'Flawless zero-delay pickup. Staff had temperature logs and allergen tags ready as per FSSAI safety norms. The meals were fresh and deeply appreciated!',
+    foodTag: 'Cooked Meals',
+    verifiedRescue: true
+  },
+  {
+    id: 'rev-3',
+    restaurant: 'Spice Route Fine Dining',
+    donorOrg: 'Spice Route Bistro',
+    reviewerName: 'Sister Teresa Shelter',
+    reviewerType: 'ngo',
+    reviewerOrg: 'Sister Teresa Hope Mission',
+    rating: 5,
+    date: '3 days ago',
+    comment: 'The paneer butter masala and rotis were packed in insulated food warmers. Highest quality standards we have experienced on PlateShare.',
+    foodTag: 'Paneer Masala & Rotis',
+    verifiedRescue: true
+  },
+  {
+    id: 'rev-4',
+    restaurant: 'Artisan Sourdough Bakery',
+    donorOrg: 'Artisan Sourdough Bakery',
+    reviewerName: 'Mohammad Farooq',
+    reviewerType: 'community',
+    reviewerOrg: 'Bandra Youth Foundation',
+    rating: 5,
+    date: 'Sep 8, 2026',
+    comment: 'Freshly baked breads and muffins were packaged cleanly in dry bakery bags. Great contribution to evening community tea distribution.',
+    foodTag: 'Fresh Bakery Items',
+    verifiedRescue: true
+  },
+  {
+    id: 'rev-5',
+    restaurant: 'Royal Heritage Banquets',
+    donorOrg: 'Royal Heritage Banquets',
+    reviewerName: 'Feeding From Far NGO',
+    reviewerType: 'ngo',
+    reviewerOrg: 'Feeding From Far',
+    rating: 4,
+    date: 'Sep 6, 2026',
+    comment: 'Handled 80 meals of dum biryani seamlessly via loading gate B. Very swift dispatch process with instant OTP verification.',
+    foodTag: 'Vegetable Biryani',
+    verifiedRescue: true
+  }
+];
+
+// Restaurant Food Rescue Badges & Certificates Data
+const RESTAURANT_AWARDS = [
+  {
+    id: 'rest-1',
+    name: 'Grand Hyatt Banquet Hall',
+    category: 'Luxury Hotel & Convention Center',
+    location: 'Bandra Kurla Complex, Mumbai',
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
+    stats: {
+      mealsRescued: 4850,
+      kgSaved: 2182,
+      co2Prevented: '5.4 Tons',
+      activeMonths: 14
+    },
+    tier: 'Platinum Champion',
+    tierColor: '#4338ca',
+    tierBg: '#e0e7ff',
+    rating: 4.9,
+    reviewCount: 38,
+    badges: [
+      { id: 'b1', name: 'Zero Waste Star', icon: 'fa-star', desc: 'Over 4,000 meals rescued without a single incident', color: '#eab308' },
+      { id: 'b2', name: 'Rapid Dispatch', icon: 'fa-bolt', desc: 'Average pickup coordination under 18 minutes', color: '#3b82f6' },
+      { id: 'b3', name: 'FSSAI Gold Standard', icon: 'fa-shield-halved', desc: '100% compliant food safety temperature logging', color: '#16a34a' },
+      { id: 'b4', name: 'Hunger Hero', icon: 'fa-medal', desc: 'Supported 12+ partner NGOs and community shelters', color: '#a855f7' }
+    ],
+    certificate: {
+      id: 'CERT-PS-2026-0891',
+      title: 'Certified Zero-Food-Waste Champion',
+      issuer: 'PlateShare & Food Rescue Alliance',
+      issueDate: 'August 15, 2026',
+      validUntil: 'August 2027',
+      level: 'Platinum Grade Accreditation'
+    }
+  },
+  {
+    id: 'rest-2',
+    name: 'Spice Route Fine Dining',
+    category: 'Fine Dining & Banquet',
+    location: 'Santacruz West, Mumbai',
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+    stats: {
+      mealsRescued: 2940,
+      kgSaved: 1323,
+      co2Prevented: '3.2 Tons',
+      activeMonths: 9
+    },
+    tier: 'Gold Guardian',
+    tierColor: '#b45309',
+    tierBg: '#fef3c7',
+    rating: 4.95,
+    reviewCount: 26,
+    badges: [
+      { id: 'b1', name: 'Gold Guardian', icon: 'fa-award', desc: 'Surpassed 2,500 safely distributed surplus meals', color: '#d97706' },
+      { id: 'b2', name: 'Thermal Master', icon: 'fa-fire-flame-curved', desc: 'Consistently maintains hot food chain above 65°C', color: '#ef4444' },
+      { id: 'b3', name: 'Community Pillar', icon: 'fa-heart', desc: 'Direct support to Santacruz local volunteer networks', color: '#ec4899' }
+    ],
+    certificate: {
+      id: 'CERT-PS-2026-0742',
+      title: 'Excellence in Sustainable Food Recovery',
+      issuer: 'PlateShare Sustainability Board',
+      issueDate: 'July 1, 2026',
+      validUntil: 'July 2027',
+      level: 'Gold Grade Accreditation'
+    }
+  },
+  {
+    id: 'rest-3',
+    name: 'Artisan Sourdough & Patisserie',
+    category: 'Bakery & Cafe',
+    location: 'Hill Road, Bandra West, Mumbai',
+    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
+    stats: {
+      mealsRescued: 1680,
+      kgSaved: 756,
+      co2Prevented: '1.8 Tons',
+      activeMonths: 6
+    },
+    tier: 'Silver Rescuer',
+    tierColor: '#475569',
+    tierBg: '#f1f5f9',
+    rating: 4.88,
+    reviewCount: 19,
+    badges: [
+      { id: 'b1', name: 'Daily Contributor', icon: 'fa-calendar-check', desc: 'Over 100 consecutive days of surplus bakery sharing', color: '#0ea5e9' },
+      { id: 'b2', name: 'Eco-Packaging Star', icon: 'fa-box-tissue', desc: '100% plastic-free biodegradable packaging', color: '#10b981' }
+    ],
+    certificate: {
+      id: 'CERT-PS-2026-0610',
+      title: 'Community Nutrition & Zero-Waste Certificate',
+      issuer: 'PlateShare Metro Initiative',
+      issueDate: 'June 10, 2026',
+      validUntil: 'June 2027',
+      level: 'Silver Grade Accreditation'
+    }
+  },
+  {
+    id: 'rest-4',
+    name: 'Royal Heritage Wedding Banquets',
+    category: 'Large Event Hall & Catering',
+    location: 'SV Road, Khar West, Mumbai',
+    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+    stats: {
+      mealsRescued: 3620,
+      kgSaved: 1629,
+      co2Prevented: '4.1 Tons',
+      activeMonths: 11
+    },
+    tier: 'Gold Guardian',
+    tierColor: '#b45309',
+    tierBg: '#fef3c7',
+    rating: 4.85,
+    reviewCount: 31,
+    badges: [
+      { id: 'b1', name: 'Mega Event Rescuer', icon: 'fa-people-group', desc: 'Handled over 15 wedding banquet surplus rescues > 100 meals each', color: '#f59e0b' },
+      { id: 'b2', name: 'Night Owl Hero', icon: 'fa-moon', desc: 'Swift coordination for late-night post-event collections', color: '#6366f1' }
+    ],
+    certificate: {
+      id: 'CERT-PS-2026-0524',
+      title: 'Large-Scale Banquet Food Preservation Honors',
+      issuer: 'National Food Recovery Network & PlateShare',
+      issueDate: 'May 20, 2026',
+      validUntil: 'May 2027',
+      level: 'Gold Grade Accreditation'
+    }
+  }
+];

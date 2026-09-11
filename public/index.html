@@ -8,7 +8,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
-    <link rel="stylesheet" href="css/styles.css?v=3.0" />
+    <link rel="stylesheet" href="css/styles.css?v=4.0" />
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>"
@@ -59,6 +59,13 @@
               style="font-size: 0.82rem; margin-right: 4px"
             ></i>
             Impact</a
+          >
+          <a href="#awards" data-view-target="awards" id="navAwardsLink"
+            ><i
+              class="fa-solid fa-award"
+              style="font-size: 0.85rem; margin-right: 4px; color: #f59e0b;"
+            ></i>
+            Badges & Certificates</a
           >
         </nav>
 
@@ -872,6 +879,53 @@
                 ></p>
               </div>
             </div>
+
+            <!-- Restaurant Food Reviews by NGOs & Communities (Bottom Right) -->
+            <div class="stat-box restaurant-reviews-card" style="padding: 22px; background: #ffffff; border: 1.5px solid #d9e7de; border-radius: 14px; box-shadow: 0 4px 16px rgba(31, 77, 54, 0.06);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1.5px solid #f0eee6; padding-bottom: 10px;">
+                <div>
+                  <h4 style="font-size: 1.05rem; font-weight: 700; color: #1f4d36; margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-star" style="color: #f59e0b;"></i> Restaurant Food Reviews
+                  </h4>
+                  <p style="font-size: 0.8rem; color: #7a756c; margin: 0;">Verified feedback by NGOs & Communities</p>
+                </div>
+                <button
+                  class="btn btn-sm btn-outline-green"
+                  id="openReviewFormBtn"
+                  onclick="App.toggleReviewForm()"
+                  style="font-size: 0.78rem; padding: 4px 10px; font-weight: 600;"
+                >
+                  <i class="fa-solid fa-pen"></i> Add Review
+                </button>
+              </div>
+
+              <!-- Collapsible Add Review Form -->
+              <div id="inlineAddReviewBox" style="display: none; background: #fafaf8; border: 1px solid #e8e2d5; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+                <h5 style="font-size: 0.88rem; color: #1f4d36; margin-bottom: 8px;">Leave Food Quality Feedback</h5>
+                <form id="inlineReviewForm" onsubmit="App.handleReviewSubmit(event)">
+                  <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <select id="reviewRatingSelect" class="form-control" style="font-size: 0.82rem; padding: 6px 8px; flex: 1;" required>
+                      <option value="5">⭐⭐⭐⭐⭐ Excellent (5/5)</option>
+                      <option value="4">⭐⭐⭐⭐ Great (4/5)</option>
+                      <option value="3">⭐⭐⭐ Good (3/5)</option>
+                      <option value="2">⭐⭐ Fair (2/5)</option>
+                      <option value="1">⭐ Poor (1/5)</option>
+                    </select>
+                    <input type="text" id="reviewOrgInput" class="form-control" placeholder="Your NGO / Shelter Name" style="font-size: 0.82rem; padding: 6px 8px; flex: 1.2;" required />
+                  </div>
+                  <textarea id="reviewCommentInput" class="form-control" rows="2" placeholder="Describe food freshness, hygiene, temperature, and safe distribution..." style="font-size: 0.82rem; padding: 6px 8px; margin-bottom: 8px;" required></textarea>
+                  <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-sm" onclick="App.toggleReviewForm()" style="font-size: 0.78rem; background: #e5e7eb;">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-orange" style="font-size: 0.78rem;">Submit Review</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Reviews Feed for this Restaurant -->
+              <div id="detailReviewsContainer" style="display: flex; flex-direction: column; gap: 10px; max-height: 380px; overflow-y: auto; padding-right: 2px;">
+                <!-- Dynamically populated via App.renderRestaurantReviews -->
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -986,6 +1040,100 @@
           <span style="font-size: 0.85rem; color: #7a756c"
             >— Anita D., Community Outreach Coordinator</span
           >
+        </div>
+      </section>
+
+      <!-- VIEW 8: RESTAURANT BADGES & CERTIFICATES PAGE -->
+      <section id="view-awards" class="view-section">
+        <div class="dashboard-header" style="align-items: flex-start; margin-bottom: 24px;">
+          <div>
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: #fef3c7; color: #b45309; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;">
+              <i class="fa-solid fa-award"></i> Food Rescue Recognition Honors
+            </div>
+            <h2 class="dashboard-title" style="font-size: 2rem;">Restaurant Badges & Certified Honors</h2>
+            <p class="text-muted" style="max-width: 650px;">
+              Recognizing hotels, banquet halls, and restaurants that turn surplus food into dignified community meals instead of waste. Badges and certificates are awarded based on verified rescued meals, hygiene consistency, and NGO reviews.
+            </p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-outline-green btn-sm" onclick="App.navigateTo('impact')">
+              <i class="fa-solid fa-chart-pie"></i> View Impact
+            </button>
+            <button class="btn btn-orange btn-sm" onclick="App.navigateTo('create-donation')">
+              <i class="fa-solid fa-plus-circle"></i> Donate Surplus Food
+            </button>
+          </div>
+        </div>
+
+        <!-- Tier Highlights Summary Cards -->
+        <div class="stats-grid" style="margin-bottom: 30px;">
+          <div class="stat-box highlight">
+            <div class="stat-box-num" id="awardsTotalMeals">13,090+</div>
+            <div class="stat-box-label"><i class="fa-solid fa-bowl-food" style="color:var(--color-safe); margin-right:4px;"></i> Total Meals Honored</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-num">14</div>
+            <div class="stat-box-label"><i class="fa-solid fa-certificate" style="color:#f59e0b; margin-right:4px;"></i> Certified Partners</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-num">4.9 ★</div>
+            <div class="stat-box-label"><i class="fa-solid fa-star" style="color:#f59e0b; margin-right:4px;"></i> Avg Community Rating</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-num">100%</div>
+            <div class="stat-box-label"><i class="fa-solid fa-shield-check" style="color:var(--color-forest-green); margin-right:4px;"></i> FSSAI Hygiene Audit Pass</div>
+          </div>
+        </div>
+
+        <!-- Filter Chips for Restaurant Tiers -->
+        <div style="display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;">
+          <span style="font-size: 0.9rem; font-weight: 700; color: #4a453e; margin-right: 6px;">Filter Level:</span>
+          <button class="badge-filter-btn active" data-tier="all" onclick="App.filterAwards('all')">All Honors</button>
+          <button class="badge-filter-btn" data-tier="Platinum Champion" onclick="App.filterAwards('Platinum Champion')">💎 Platinum Champions (4,000+ meals)</button>
+          <button class="badge-filter-btn" data-tier="Gold Guardian" onclick="App.filterAwards('Gold Guardian')">🥇 Gold Guardians (2,500+ meals)</button>
+          <button class="badge-filter-btn" data-tier="Silver Rescuer" onclick="App.filterAwards('Silver Rescuer')">🥈 Silver Rescuers (1,000+ meals)</button>
+        </div>
+
+        <!-- Restaurant Badges Grid -->
+        <div id="restaurantAwardsContainer" class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px;">
+          <!-- Injected dynamically via App.renderAwardsPage() -->
+        </div>
+
+        <!-- Certificate Modal Viewer -->
+        <div id="certModalOverlay" class="modal-overlay" style="z-index: 2500;">
+          <div class="modal-card" style="max-width: 620px; padding: 36px; border-radius: 16px; background: #ffffff; border: 4px double #d4af37; box-shadow: 0 20px 50px rgba(0,0,0,0.25); text-align: center; position: relative;">
+            <button class="modal-close-btn" onclick="App.closeCertModal()" style="top: 14px; right: 14px;">&times;</button>
+            <div style="border: 2px solid #e8e2d5; padding: 24px; border-radius: 12px; background: #faf8f5;">
+              <div style="font-size: 2.8rem; color: #d4af37; margin-bottom: 6px;">
+                <i class="fa-solid fa-award"></i>
+              </div>
+              <div style="font-size: 0.75rem; font-weight: 800; letter-spacing: 2px; color: #b45309; text-transform: uppercase; margin-bottom: 4px;">PlateShare & Food Rescue Alliance</div>
+              <h2 id="certModalTitle" style="font-size: 1.6rem; color: #1f4d36; font-family: serif; margin-bottom: 8px;">Certificate of Sustainable Food Rescue</h2>
+              <p style="font-size: 0.88rem; color: #7a756c; margin-bottom: 16px;">This accredited certificate of distinction is proudly presented to</p>
+              
+              <h3 id="certModalRecipient" style="font-size: 1.7rem; color: #282420; font-weight: 800; border-bottom: 2px solid #d4af37; display: inline-block; padding-bottom: 4px; margin-bottom: 14px;">
+                Grand Hyatt Banquet Hall
+              </h3>
+
+              <p id="certModalDesc" style="font-size: 0.95rem; color: #4a453e; line-height: 1.5; max-width: 480px; margin: 0 auto 20px auto;">
+                In recognition of outstanding dedication to zero food waste, having safely salvaged and distributed surplus meals to vulnerable communities with 100% verified temperature logs.
+              </p>
+
+              <div style="display: flex; justify-content: space-around; font-size: 0.82rem; color: #6b7280; border-top: 1px dashed #d5cdbc; padding-top: 14px; margin-top: 10px;">
+                <div><strong>Certificate ID:</strong> <span id="certModalId">CERT-PS-2026-0891</span></div>
+                <div><strong>Issue Date:</strong> <span id="certModalDate">August 2026</span></div>
+                <div><strong>Accreditation:</strong> <span id="certModalGrade" style="color:#1f4d36; font-weight:700;">Platinum Grade</span></div>
+              </div>
+            </div>
+            <div style="margin-top: 18px; display: flex; justify-content: center; gap: 12px;">
+              <button class="btn btn-outline-green btn-sm" onclick="window.print()">
+                <i class="fa-solid fa-print"></i> Print / Download PDF
+              </button>
+              <button class="btn btn-primary btn-sm" onclick="App.closeCertModal()" style="background: var(--color-forest-green); border-color: var(--color-forest-green);">
+                Done
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -1198,7 +1346,7 @@
     </footer>
 
     <!-- App Scripts -->
-    <script src="js/data.js?v=3.1"></script>
-    <script src="js/app.js?v=3.1"></script>
+    <script src="js/data.js?v=4.0"></script>
+    <script src="js/app.js?v=4.0"></script>
   </body>
 </html>

@@ -304,6 +304,7 @@ const App = {
     else if (viewId === 'community-feed') this.renderCommunityFeed();
     else if (viewId === 'create-donation') this.renderCreateDonation();
     else if (viewId === 'impact') this.renderImpactPage();
+    else if (viewId === 'awards') this.renderAwardsPage();
   },
 
   openModal() {
@@ -1019,6 +1020,204 @@ const App = {
 
       actionButtonsContainer.innerHTML = nextActionHtml;
     }
+
+    // Render Restaurant Food Reviews by NGOs & Communities (Bottom Right)
+    this.renderRestaurantReviews(item);
+  },
+
+  renderRestaurantReviews(item) {
+    const container = document.getElementById('detailReviewsContainer');
+    if (!container) return;
+
+    const restName = (item.donor && item.donor.organization) ? item.donor.organization : (item.location && item.location.name ? item.location.name : 'Restaurant Partner');
+    const reviews = PlateStore.getReviews(restName);
+
+    if (reviews.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 20px 10px; background: #fafaf8; border-radius: 8px; border: 1px dashed #d5cdbc;">
+          <i class="fa-solid fa-star" style="color: #cbd5e1; font-size: 1.5rem; margin-bottom: 6px;"></i>
+          <p style="font-size: 0.85rem; color: #7a756c; margin: 0;">No reviews yet for this kitchen. Be the first NGO or volunteer to review!</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = reviews.map(r => {
+      const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+      const isNGO = r.reviewerType === 'ngo';
+      const typeBadge = isNGO 
+        ? '<span class="badge" style="background:#eff6ff; color:#1d4ed8; font-size:10px; padding:2px 6px;"><i class="fa-solid fa-handshake-angle"></i> NGO Review</span>'
+        : '<span class="badge" style="background:#f0fdf4; color:#15803d; font-size:10px; padding:2px 6px;"><i class="fa-solid fa-users"></i> Community</span>';
+
+      return `
+        <div class="review-item-bubble">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+            <div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: #1f2937; display: flex; align-items: center; gap: 6px;">
+                ${r.reviewerName}
+                ${r.verifiedRescue ? '<span title="Verified Food Rescue Handover" style="color:var(--color-forest-green); font-size:11px;"><i class="fa-solid fa-circle-check"></i></span>' : ''}
+              </div>
+              <div style="font-size: 0.76rem; color: #6b7280;">${r.reviewerOrg} · <span style="color:#9ca3af;">${r.date}</span></div>
+            </div>
+            <div style="text-align: right;">
+              <span class="review-stars">${stars}</span>
+              <div>${typeBadge}</div>
+            </div>
+          </div>
+          <p style="font-size: 0.83rem; color: #374151; line-height: 1.4; margin: 6px 0 0 0;">
+            "${r.comment}"
+          </p>
+        </div>
+      `;
+    }).join('');
+  },
+
+  toggleReviewForm() {
+    const box = document.getElementById('inlineAddReviewBox');
+    const btn = document.getElementById('openReviewFormBtn');
+    if (!box) return;
+    const isHidden = box.style.display === 'none';
+    box.style.display = isHidden ? 'block' : 'none';
+    if (btn) btn.innerHTML = isHidden ? '<i class="fa-solid fa-xmark"></i> Close' : '<i class="fa-solid fa-pen"></i> Add Review';
+  },
+
+  handleReviewSubmit(e) {
+    e.preventDefault();
+    const item = PlateStore.getDonationById(this.activeDetailId);
+    if (!item) return;
+
+    const user = PlateStore.getCurrentUser();
+    const rating = parseInt(document.getElementById('reviewRatingSelect').value, 10) || 5;
+    const org = document.getElementById('reviewOrgInput').value.trim() || 'Community Partner';
+    const comment = document.getElementById('reviewCommentInput').value.trim();
+
+    const restName = (item.donor && item.donor.organization) ? item.donor.organization : (item.location && item.location.name ? item.location.name : 'Restaurant Partner');
+
+    const newRev = {
+      id: 'rev-' + Date.now(),
+      restaurant: restName,
+      donorOrg: restName,
+      reviewerName: (user.isLoggedIn && user.name !== 'Guest') ? user.name : 'Verified Rescue Volunteer',
+      reviewerType: user.role === 'community' ? 'community' : 'ngo',
+      reviewerOrg: org,
+      rating: rating,
+      date: 'Just now',
+      comment: comment,
+      foodTag: item.title,
+      verifiedRescue: true
+    };
+
+    PlateStore.addReview(newRev);
+    this.showToast('Thank you! Your food quality review has been published.', 'success', 'Review Added');
+    
+    // Reset form and refresh reviews
+    document.getElementById('reviewCommentInput').value = '';
+    this.toggleReviewForm();
+    this.renderRestaurantReviews(item);
+  },
+
+  currentAwardsFilter: 'all',
+
+  filterAwards(tier) {
+    this.currentAwardsFilter = tier;
+    document.querySelectorAll('.badge-filter-btn').forEach(btn => {
+      if (btn.getAttribute('data-tier') === tier) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    this.renderAwardsPage();
+  },
+
+  renderAwardsPage() {
+    const container = document.getElementById('restaurantAwardsContainer');
+    if (!container) return;
+
+    let list = RESTAURANT_AWARDS;
+    if (this.currentAwardsFilter !== 'all') {
+      list = list.filter(r => r.tier === this.currentAwardsFilter);
+    }
+
+    container.innerHTML = list.map(rest => {
+      const stars = '★'.repeat(Math.round(rest.rating));
+      return `
+        <div class="award-card">
+          <div class="award-card-header">
+            <img src="${rest.image}" alt="${rest.name}" loading="lazy" />
+            <span class="award-tier-badge" style="background:${rest.tierBg}; color:${rest.tierColor};">
+              <i class="fa-solid fa-crown" style="margin-right:4px;"></i> ${rest.tier}
+            </span>
+          </div>
+          <div class="award-card-body">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+              <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #1f2937; margin-bottom: 2px;">${rest.name}</h3>
+                <span style="font-size: 0.8rem; color: #6b7280;"><i class="fa-solid fa-location-dot" style="color:var(--color-forest-green);"></i> ${rest.location}</span>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 0.95rem; font-weight: 800; color: #b45309;">${rest.rating} <span style="color:#f59e0b; font-size:0.85rem;">★</span></div>
+                <div style="font-size: 0.72rem; color: #9ca3af;">${rest.reviewCount} NGO reviews</div>
+              </div>
+            </div>
+
+            <!-- Stats Ribbon -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 8px; margin: 12px 0; text-align: center;">
+              <div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: var(--color-forest-green);">${rest.stats.mealsRescued.toLocaleString()}</div>
+                <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase;">Meals Saved</div>
+              </div>
+              <div style="border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
+                <div style="font-size: 0.95rem; font-weight: 800; color: #c2410c;">${rest.stats.kgSaved} kg</div>
+                <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase;">Rescued</div>
+              </div>
+              <div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: #4338ca;">${rest.stats.co2Prevented}</div>
+                <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase;">CO₂ Avoided</div>
+              </div>
+            </div>
+
+            <!-- Earned Badges -->
+            <div style="margin-bottom: 14px;">
+              <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Earned Food Rescue Badges:</div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                ${rest.badges.map(b => `
+                  <span class="award-badge-pill" title="${b.desc}">
+                    <i class="fa-solid ${b.icon}" style="color:${b.color};"></i> ${b.name}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Certificate Action Button -->
+            <div style="margin-top: auto; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+              <button class="btn btn-outline-green btn-sm" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="App.openCertModal('${rest.id}')">
+                <i class="fa-solid fa-certificate" style="color: #f59e0b;"></i> View Verified Certificate
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+
+  openCertModal(restId) {
+    const rest = RESTAURANT_AWARDS.find(r => r.id === restId);
+    if (!rest) return;
+
+    const overlay = document.getElementById('certModalOverlay');
+    if (!overlay) return;
+
+    document.getElementById('certModalRecipient').textContent = rest.name;
+    document.getElementById('certModalTitle').textContent = rest.certificate.title;
+    document.getElementById('certModalId').textContent = rest.certificate.id;
+    document.getElementById('certModalDate').textContent = rest.certificate.issueDate;
+    document.getElementById('certModalGrade').textContent = rest.certificate.level;
+    document.getElementById('certModalDesc').textContent = `Awarded for successfully diverting ${rest.stats.mealsRescued.toLocaleString()} surplus meals (${rest.stats.kgSaved} kg) from landfills to authorized shelters and communities with a verified rating of ${rest.rating} ★.`;
+
+    overlay.classList.add('active');
+  },
+
+  closeCertModal() {
+    const overlay = document.getElementById('certModalOverlay');
+    if (overlay) overlay.classList.remove('active');
   },
 
   renderStepper(currentStep) {
