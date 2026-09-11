@@ -7,6 +7,83 @@ const App = {
   searchQuery: '',
   timerInterval: null,
 
+  showToast(message, type = 'success', title = '') {
+    const container = document.getElementById('uiToastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `ui-toast toast-${type}`;
+
+    let iconClass = 'fa-solid fa-circle-check';
+    let defaultTitle = 'Success';
+    if (type === 'warning') { iconClass = 'fa-solid fa-triangle-exclamation'; defaultTitle = 'Notice'; }
+    else if (type === 'info') { iconClass = 'fa-solid fa-circle-info'; defaultTitle = 'Information'; }
+    else if (type === 'error') { iconClass = 'fa-solid fa-circle-xmark'; defaultTitle = 'Error'; }
+
+    toast.innerHTML = `
+      <div class="ui-toast-icon"><i class="${iconClass}"></i></div>
+      <div class="ui-toast-content">
+        <div class="ui-toast-title">${title || defaultTitle}</div>
+        <div class="ui-toast-message">${message}</div>
+      </div>
+      <button class="ui-toast-close" onclick="this.closest('.ui-toast').remove()">&times;</button>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('hiding');
+      setTimeout(() => toast.remove(), 320);
+    }, 4500);
+  },
+
+  showModalAlert(message, title = 'Notice', icon = 'fa-solid fa-circle-check', color = 'var(--color-forest-green)') {
+    const overlay = document.getElementById('uiModalOverlay');
+    const msgEl = document.getElementById('uiModalMessage');
+    const titleEl = document.getElementById('uiModalTitle');
+    const iconEl = document.getElementById('uiModalIcon');
+    const cancelBtn = document.getElementById('uiModalCancelBtn');
+    const confirmBtn = document.getElementById('uiModalConfirmBtn');
+
+    if (!overlay) return;
+    if (titleEl) titleEl.textContent = title;
+    if (msgEl) msgEl.innerHTML = message;
+    if (iconEl) iconEl.innerHTML = `<i class="${icon}" style="color: ${color};"></i>`;
+    if (cancelBtn) cancelBtn.style.display = 'none';
+
+    overlay.classList.add('active');
+
+    confirmBtn.onclick = () => {
+      overlay.classList.remove('active');
+    };
+  },
+
+  showModalConfirm(message, title = 'Confirm Action', onConfirm, icon = 'fa-solid fa-triangle-exclamation', color = '#d97706') {
+    const overlay = document.getElementById('uiModalOverlay');
+    const msgEl = document.getElementById('uiModalMessage');
+    const titleEl = document.getElementById('uiModalTitle');
+    const iconEl = document.getElementById('uiModalIcon');
+    const cancelBtn = document.getElementById('uiModalCancelBtn');
+    const confirmBtn = document.getElementById('uiModalConfirmBtn');
+
+    if (!overlay) return;
+    if (titleEl) titleEl.textContent = title;
+    if (msgEl) msgEl.innerHTML = message;
+    if (iconEl) iconEl.innerHTML = `<i class="${icon}" style="color: ${color};"></i>`;
+    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+    overlay.classList.add('active');
+
+    confirmBtn.onclick = () => {
+      overlay.classList.remove('active');
+      if (typeof onConfirm === 'function') onConfirm();
+    };
+
+    cancelBtn.onclick = () => {
+      overlay.classList.remove('active');
+    };
+  },
+
   init() {
     const user = PlateStore.getCurrentUser();
     this.currentRole = user.role || 'visitor';
@@ -76,9 +153,15 @@ const App = {
       authForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const role = document.getElementById('authRoleSelect').value;
-        const name = document.getElementById('authNameInput').value || 'Community Partner';
-        this.setRole(role, name);
+        const enteredName = document.getElementById('authNameInput').value.trim();
+        const enteredEmail = document.getElementById('authEmailInput').value.trim();
+        const name = enteredName || (enteredEmail ? enteredEmail.split('@')[0] : 'Partner');
+        const org = enteredName || 'Partner Organization';
+
+        this.setRole(role, name, org);
         this.closeModal();
+        this.showToast(`Logged in successfully as <strong>${name}</strong>!`, 'success', 'Welcome');
+
         if (role === 'donor') this.navigateTo('donor-dashboard');
         else if (role === 'ngo') this.navigateTo('ngo-feed');
         else if (role === 'community') this.navigateTo('community-feed');
@@ -120,18 +203,22 @@ const App = {
     this.updateRoleUI();
   },
 
-  setRole(role, name) {
+  setRole(role, name, org) {
     this.currentRole = role;
     const user = PlateStore.getCurrentUser();
     user.role = role;
-    if (name) {
-      user.name = name;
+
+    if (name && name.trim()) {
+      user.name = name.trim();
+      user.org = org ? org.trim() : (role === 'donor' ? 'Donor Partner' : (role === 'ngo' ? 'Rescue Partner' : 'Community Volunteer'));
+      user.isLoggedIn = true;
     } else {
-      if (role === 'donor') { user.name = 'Rajendra (Chef)'; user.org = 'Grand Hyatt'; }
-      else if (role === 'ngo') { user.name = 'Pooja Sharma'; user.org = 'Robin Hood Army'; }
-      else if (role === 'community') { user.name = 'Kiran Patil'; user.org = 'Community Aid'; }
-      else { user.name = 'Guest Visitor'; user.org = 'Community Member'; }
+      // Unauthenticated / Quick Switcher defaults: Show 'Guest' as requested
+      user.name = 'Guest';
+      user.org = role === 'donor' ? 'Donor' : (role === 'ngo' ? 'NGO' : (role === 'community' ? 'Community' : 'Visitor'));
+      user.isLoggedIn = false;
     }
+
     PlateStore.setCurrentUser(user);
     this.updateRoleUI();
   },
@@ -145,11 +232,13 @@ const App = {
 
     const bannerText = document.getElementById('roleBannerText');
     if (bannerText) {
+      const isGuest = !user.isLoggedIn || user.name === 'Guest';
+      const userLabel = isGuest ? 'Guest' : `${user.name} (${user.org})`;
       const roleNames = {
         visitor: '<i class="fa-solid fa-eye"></i> Public Visitor View — Community food-rescue platform',
-        donor: '<i class="fa-solid fa-hotel"></i> Donor Mode: Logged in as ' + user.name + ' (' + user.org + ')',
-        ngo: '<i class="fa-solid fa-handshake-angle"></i> NGO Mode: Logged in as ' + user.name + ' (' + user.org + ')',
-        community: '<i class="fa-solid fa-users"></i> Community Mode: Logged in as ' + user.name + ' (' + user.org + ')'
+        donor: `<i class="fa-solid fa-hotel"></i> Donor Mode: Logged in as ${userLabel}`,
+        ngo: `<i class="fa-solid fa-handshake-angle"></i> NGO Mode: Logged in as ${userLabel}`,
+        community: `<i class="fa-solid fa-users"></i> Community Mode: Logged in as ${userLabel}`
       };
       bannerText.innerHTML = roleNames[this.currentRole] || 'PlateShare Platform';
     }
@@ -279,6 +368,73 @@ const App = {
     }, 15000);
   },
 
+  currentDonorTab: 'active',
+
+  switchDonorTab(tab) {
+    this.currentDonorTab = tab;
+    const activeBtn = document.getElementById('donorTabActive');
+    const historyBtn = document.getElementById('donorTabHistory');
+    const activeSec = document.getElementById('donorActiveSection');
+    const historySec = document.getElementById('donorHistorySection');
+    const clearHistoryBtn = document.getElementById('donorClearHistoryBtn');
+
+    if (tab === 'active') {
+      if (activeBtn) {
+        activeBtn.style.color = 'var(--color-forest-green)';
+        activeBtn.style.borderBottom = '3px solid var(--color-forest-green)';
+        activeBtn.classList.add('active');
+      }
+      if (historyBtn) {
+        historyBtn.style.color = '#7a756c';
+        historyBtn.style.borderBottom = 'none';
+        historyBtn.classList.remove('active');
+      }
+      if (activeSec) activeSec.style.display = 'block';
+      if (historySec) historySec.style.display = 'none';
+      if (clearHistoryBtn) clearHistoryBtn.style.display = 'none';
+    } else {
+      if (historyBtn) {
+        historyBtn.style.color = 'var(--color-forest-green)';
+        historyBtn.style.borderBottom = '3px solid var(--color-forest-green)';
+        historyBtn.classList.add('active');
+      }
+      if (activeBtn) {
+        activeBtn.style.color = '#7a756c';
+        activeBtn.style.borderBottom = 'none';
+        activeBtn.classList.remove('active');
+      }
+      if (activeSec) activeSec.style.display = 'none';
+      if (historySec) historySec.style.display = 'block';
+
+      // Only show Clear History button if there are completed/claimed items in history
+      const historyCount = PlateStore.getDonations().filter(d => d.status !== 'posted').length;
+      if (clearHistoryBtn) {
+        clearHistoryBtn.style.display = historyCount > 0 ? 'inline-flex' : 'none';
+      }
+    }
+  },
+
+  clearOrderHistory() {
+    const count = PlateStore.getDonations().filter(d => d.status !== 'posted').length;
+    if (count === 0) {
+      this.showToast('Order history is already empty.', 'info', 'Empty History');
+      return;
+    }
+
+    this.showModalConfirm(
+      `Are you sure you want to clear all <strong>${count}</strong> completed/claimed orders from your Order History?<br><br><span style="color:#71717a; font-size:0.85rem;">Note: Your active food listings will not be affected.</span>`,
+      'Clear Order History?',
+      () => {
+        PlateStore.clearOrderHistory();
+        this.renderDonorDashboard();
+        this.switchDonorTab('history');
+        this.showToast('Order history has been successfully cleared.', 'success', 'History Cleared');
+      },
+      'fa-solid fa-trash-can',
+      '#dc2626'
+    );
+  },
+
   renderDonorDashboard() {
     const list = PlateStore.getDonations();
     const totalMeals = list.reduce((acc, d) => acc + (parseInt(d.quantity) || 0), 0);
@@ -293,45 +449,128 @@ const App = {
     if (statClaimedEl) statClaimedEl.textContent = totalClaimed;
     if (statKgEl) statKgEl.textContent = kgRescued + ' kg';
 
-    const container = document.getElementById('donorDonationsFeed');
-    if (!container) return;
+    // Separate active listings from claimed, delivered, and served orders
+    const activeList = list.filter(d => d.status === 'posted');
+    const historyList = list.filter(d => ['claimed', 'picked_up', 'delivered', 'served'].includes(d.status));
 
-    if (list.length === 0) {
-      container.innerHTML = '<p class="text-muted">No active donations yet. Click Create Donation to share surplus meals!</p>';
-      return;
+    const activeCountEl = document.getElementById('donorActiveCount');
+    const historyCountEl = document.getElementById('donorHistoryCount');
+    if (activeCountEl) activeCountEl.textContent = activeList.length;
+    if (historyCountEl) historyCountEl.textContent = historyList.length;
+
+    // 1. Render Active Food Listings
+    const activeContainer = document.getElementById('donorDonationsFeed');
+    if (activeContainer) {
+      if (activeList.length === 0) {
+        activeContainer.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px; background: #fff; border-radius: 12px; border: 1.5px dashed #CBDDD1;">
+            <i class="fa-solid fa-utensils" style="font-size: 2.2rem; color: #8AD4A2; margin-bottom: 12px;"></i>
+            <h4 style="font-size: 1.15rem; color: #3A3630; margin-bottom: 6px;">No Active Food Listings</h4>
+            <p style="font-size: 0.95rem; color: #7A756C; margin-bottom: 16px;">All your surplus meals have been claimed or you haven't posted any active meals.</p>
+            <button class="btn btn-orange btn-sm" onclick="App.navigateTo('create-donation')">
+              <i class="fa-solid fa-plus-circle"></i> Post New Donation
+            </button>
+          </div>
+        `;
+      } else {
+        activeContainer.innerHTML = activeList.map(item => {
+          const urgency = this.calculateUrgency(item.expiryTime);
+          return `
+            <div class="donation-card ${urgency.borderClass}" onclick="App.showDetail('${item.id}')" style="cursor:pointer;">
+              <div class="card-img-wrapper">
+                <img src="${item.image}" alt="${item.title}" loading="lazy" />
+                <div class="card-img-overlay-badges">
+                  <span class="badge ${urgency.badgeClass}">${urgency.label}</span>
+                  <span class="badge badge-gray">${item.foodType}</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <h3 class="card-title">${item.title}</h3>
+                <div class="card-meta-line">
+                  <span><i class="fa-solid fa-location-dot" style="color:var(--color-forest-green); margin-right:4px;"></i> ${item.location.name}</span>
+                </div>
+                <div class="card-tags">
+                  <span class="tag-pill">${item.category}</span>
+                  <span class="tag-pill">${item.quantity} ${item.unit}</span>
+                  <span class="tag-pill" style="color:var(--color-forest-green); font-weight:600;"><i class="fa-solid fa-circle-dot"></i> ACTIVE</span>
+                </div>
+                <div class="card-countdown">
+                  <span style="color: ${urgency.colorHex};"><i class="fa-solid fa-clock" style="margin-right:4px;"></i> ${urgency.timeText}</span>
+                </div>
+                <div class="card-footer-actions">
+                  <button class="btn btn-outline-green btn-sm" style="width:100%;"><i class="fa-solid fa-circle-info"></i> View Details & Stepper</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
     }
 
-    container.innerHTML = list.map(item => {
-      const urgency = this.calculateUrgency(item.expiryTime);
-      return `
-        <div class="donation-card ${urgency.borderClass}" onclick="App.showDetail('${item.id}')" style="cursor:pointer;">
-          <div class="card-img-wrapper">
-            <img src="${item.image}" alt="${item.title}" loading="lazy" />
-            <div class="card-img-overlay-badges">
-              <span class="badge ${urgency.badgeClass}">${urgency.label}</span>
-              <span class="badge badge-gray">${item.foodType}</span>
-            </div>
+    // 2. Render Order History (Claimed, Picked Up, Delivered, Served)
+    const historyContainer = document.getElementById('donorHistoryFeed');
+    if (historyContainer) {
+      if (historyList.length === 0) {
+        historyContainer.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px; background: #fff; border-radius: 12px; border: 1.5px dashed #CBDDD1;">
+            <i class="fa-solid fa-clock-rotate-left" style="font-size: 2.2rem; color: #CBDDD1; margin-bottom: 12px;"></i>
+            <h4 style="font-size: 1.15rem; color: #3A3630; margin-bottom: 6px;">Order History is Empty</h4>
+            <p style="font-size: 0.95rem; color: #7A756C;">When an NGO or volunteer claims, picks up, or serves your food, the completed order will appear here.</p>
           </div>
-          <div class="card-body">
-            <h3 class="card-title">${item.title}</h3>
-            <div class="card-meta-line">
-              <span><i class="fa-solid fa-location-dot" style="color:var(--color-forest-green); margin-right:4px;"></i> ${item.location.name}</span>
+        `;
+      } else {
+        const statusConfigs = {
+          claimed: { label: 'Claimed', color: '#1e40af', bg: '#eff6ff', icon: 'fa-handshake' },
+          picked_up: { label: 'Picked Up', color: '#c2410c', bg: '#fff7ed', icon: 'fa-truck' },
+          delivered: { label: 'Delivered', color: '#6b21a8', bg: '#f5f3ff', icon: 'fa-box-check' },
+          served: { label: 'Served', color: '#065f46', bg: '#ecfdf5', icon: 'fa-circle-check' }
+        };
+
+        historyContainer.innerHTML = historyList.map(item => {
+          const cfg = statusConfigs[item.status] || { label: item.status.toUpperCase(), color: '#374151', bg: '#f3f4f6', icon: 'fa-check' };
+          const partner = item.claimedBy ? (item.claimedBy.ngoName || item.claimedBy.name || 'Robin Hood Army') : 'Verified Partner';
+          return `
+            <div class="donation-card" onclick="App.showDetail('${item.id}')" style="cursor:pointer; border: 1.5px solid #CBDDD1; opacity: 0.96;">
+              <div class="card-img-wrapper">
+                <img src="${item.image}" alt="${item.title}" loading="lazy" />
+                <div class="card-img-overlay-badges">
+                  <span class="badge" style="background:${cfg.bg}; color:${cfg.color}; font-weight:700;">
+                    <i class="fa-solid ${cfg.icon}"></i> ${cfg.label}
+                  </span>
+                  <span class="badge badge-gray">${item.foodType}</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <h3 class="card-title">${item.title}</h3>
+                <div class="card-meta-line">
+                  <span><i class="fa-solid fa-location-dot" style="color:var(--color-forest-green); margin-right:4px;"></i> ${item.location.name}</span>
+                </div>
+                <div style="background:#fafaf8; border-radius:8px; padding:8px 10px; margin: 8px 0 12px 0; font-size:0.83rem; color:#4a453e; border:1px solid #E8E2D5;">
+                  <div><strong>Claimed By:</strong> ${partner}</div>
+                  <div style="color:#7a756c; font-size:0.8rem; margin-top:2px;"><strong>Status:</strong> Step ${item.currentStep || 2} of 5 (${cfg.label})</div>
+                </div>
+                <div class="card-tags">
+                  <span class="tag-pill">${item.quantity} ${item.unit}</span>
+                  <span class="tag-pill" style="color:${cfg.color}; font-weight:600;">Status: ${cfg.label}</span>
+                </div>
+                <div class="card-footer-actions" style="margin-top:10px;">
+                  <button class="btn btn-outline-green btn-sm" style="width:100%;">
+                    <i class="fa-solid fa-clock-rotate-left"></i> View Order Stepper & OTP
+                  </button>
+                </div>
+              </div>
             </div>
-            <div class="card-tags">
-              <span class="tag-pill">${item.category}</span>
-              <span class="tag-pill">${item.quantity} ${item.unit}</span>
-              <span class="tag-pill">Status: ${item.status.toUpperCase()}</span>
-            </div>
-            <div class="card-countdown">
-              <span style="color: ${urgency.colorHex};"><i class="fa-solid fa-clock" style="margin-right:4px;"></i> ${urgency.timeText}</span>
-            </div>
-            <div class="card-footer-actions">
-              <button class="btn btn-outline-green btn-sm"><i class="fa-solid fa-circle-info"></i> View Details & Stepper</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
+          `;
+        }).join('');
+      }
+    }
+
+    const clearHistoryBtn = document.getElementById('donorClearHistoryBtn');
+    const historySec = document.getElementById('donorHistorySection');
+    if (clearHistoryBtn && historySec) {
+      const isHistoryActive = historySec.style.display !== 'none';
+      clearHistoryBtn.style.display = (isHistoryActive && historyList.length > 0) ? 'inline-flex' : 'none';
+    }
   },
 
   setupCreateDonationForm() {
@@ -435,7 +674,7 @@ const App = {
     if (geoBtn) {
       geoBtn.addEventListener('click', () => {
         if (!navigator.geolocation) {
-          alert('Geolocation is not supported by your browser.');
+          this.showToast('Geolocation is not supported by your browser.', 'warning', 'Location Error');
           return;
         }
         geoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Detecting GPS...';
@@ -513,7 +752,7 @@ const App = {
       };
 
       PlateStore.addDonation(newDonation);
-      alert('✅ Donation successfully posted! Nearby NGOs and communities have been notified.');
+      this.showToast('Donation successfully posted! Nearby NGOs and communities have been notified.', 'success', 'Donation Published');
       this.showDetail(newDonation.id);
     });
   },
@@ -549,7 +788,8 @@ const App = {
     const container = document.getElementById('ngoFeedContainer');
     if (!container) return;
 
-    let list = PlateStore.getDonations();
+    // Only active, unreserved meals belong in the live browsing feed
+    let list = PlateStore.getDonations().filter(item => item.status === 'posted');
 
     if (this.searchQuery) {
       list = list.filter(item => 
@@ -575,7 +815,7 @@ const App = {
     if (list.length === 0) {
       container.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; padding: 48px 20px; background: #fff; border-radius: 14px; border: 1px solid #E8E2D5;">
-          <p style="font-size: 1.1rem; color: #7A756C; margin-bottom: 12px;">No surplus food listings match your search.</p>
+          <p style="font-size: 1.1rem; color: #7A756C; margin-bottom: 12px;">No active surplus food listings match your search.</p>
           <button class="btn btn-outline-green btn-sm" onclick="App.resetFilters()">Reset Filters</button>
         </div>
       `;
@@ -584,7 +824,6 @@ const App = {
 
     container.innerHTML = list.map(item => {
       const urgency = this.calculateUrgency(item.expiryTime);
-      const isClaimed = item.status !== 'posted';
 
       return `
         <div class="donation-card ${urgency.borderClass}">
@@ -609,14 +848,8 @@ const App = {
               <span style="color: ${urgency.colorHex};"><i class="fa-solid fa-clock" style="margin-right:4px;"></i> ${urgency.timeText}</span>
             </div>
             <div class="card-footer-actions">
-              ${isClaimed ? `
-                <button class="btn btn-forest btn-sm" onclick="App.showDetail('${item.id}')">
-                  ${item.status === 'served' ? '<i class="fa-solid fa-circle-check"></i> Completed' : '<i class="fa-solid fa-truck"></i> Track (' + item.status + ')'}
-                </button>
-              ` : `
-                <button class="btn btn-orange btn-sm" onclick="App.claimDonation('${item.id}')"><i class="fa-solid fa-handshake"></i> Claim Meals</button>
-                <button class="btn btn-outline-green btn-sm" onclick="App.showDetail('${item.id}')"><i class="fa-solid fa-circle-info"></i> Details</button>
-              `}
+              <button class="btn btn-orange btn-sm" onclick="App.claimDonation('${item.id}')"><i class="fa-solid fa-handshake"></i> Claim Meals</button>
+              <button class="btn btn-outline-green btn-sm" onclick="App.showDetail('${item.id}')"><i class="fa-solid fa-circle-info"></i> Details</button>
             </div>
           </div>
         </div>
@@ -640,7 +873,8 @@ const App = {
     const container = document.getElementById('communityFeedContainer');
     if (!container) return;
 
-    let list = PlateStore.getDonations().filter(i => i.visibility === 'community' || i.status === 'posted');
+    // Only active, unreserved community meals
+    let list = PlateStore.getDonations().filter(i => i.status === 'posted' && (i.visibility === 'community' || i.visibility === 'ngo'));
 
     if (list.length === 0) {
       container.innerHTML = '<p class="text-muted">No community meal boxes available right now. Check back shortly!</p>';
@@ -691,7 +925,7 @@ const App = {
   showDetail(id) {
     const item = PlateStore.getDonationById(id);
     if (!item) {
-      alert('Listing not found');
+      this.showToast('Listing not found or expired', 'error', 'Error');
       this.navigateTo('ngo-feed');
       return;
     }
@@ -829,7 +1063,7 @@ const App = {
       }
     });
 
-    alert('🎉 You have claimed this food donation! Pickup OTP: ' + item.otp);
+    this.showToast(`You have claimed this food donation! Pickup OTP: <strong>${item.otp}</strong>`, 'success', 'Meals Claimed 🎉');
     this.showDetail(id);
   },
 
@@ -849,7 +1083,7 @@ const App = {
       }
     });
 
-    alert('✅ You reserved this meal pack! Show OTP ' + item.otp + ' at pickup.');
+    this.showToast(`You reserved this meal pack! Show OTP <strong>${item.otp}</strong> at pickup.`, 'success', 'Meal Pack Reserved ✅');
     this.showDetail(id);
   },
 
@@ -858,6 +1092,7 @@ const App = {
       currentStep: nextStep,
       status: nextStatus
     });
+    this.showToast(`Order updated to Step ${nextStep} (${nextStatus.replace('_', ' ').toUpperCase()})`, 'info', 'Status Updated');
     this.showDetail(id);
   },
 
@@ -869,7 +1104,7 @@ const App = {
       visibility: 'community'
     });
 
-    alert('📣 Listing has been offered to nearby Communities! It is now visible in the Community Meals feed.');
+    this.showToast('Listing has been offered to nearby Communities and is now visible in the Community Meals feed.', 'info', 'Offered to Community 📣');
     this.showDetail(id);
   },
   renderImpactPage() {

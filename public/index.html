@@ -8,7 +8,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
-    <link rel="stylesheet" href="css/styles.css?v=2.0" />
+    <link rel="stylesheet" href="css/styles.css?v=3.0" />
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>"
@@ -298,12 +298,49 @@
           </div>
         </div>
 
-        <!-- Recent Donations Feed (§4.3) -->
-        <h3 style="font-size: 1.35rem; margin-bottom: 14px">
-          Your Active & Recent Food Donations
-        </h3>
-        <div class="cards-grid" id="donorDonationsFeed">
-          <!-- Injected dynamically via App.renderDonorDashboard -->
+        <!-- Tab navigation for Active Food Listings vs Order History -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px; border-bottom: 2px solid #E8E2D5; padding-bottom: 4px;">
+          <div style="display: flex; gap: 18px;">
+            <button
+              class="donor-tab-btn active"
+              id="donorTabActive"
+              onclick="App.switchDonorTab('active')"
+              style="background: none; border: none; font-size: 1.12rem; font-weight: 700; cursor: pointer; color: var(--color-forest-green); border-bottom: 3px solid var(--color-forest-green); padding-bottom: 8px; display: inline-flex; align-items: center; gap: 8px;"
+            >
+              <i class="fa-solid fa-utensils"></i> Active Food Listings (<span id="donorActiveCount">0</span>)
+            </button>
+            <button
+              class="donor-tab-btn"
+              id="donorTabHistory"
+              onclick="App.switchDonorTab('history')"
+              style="background: none; border: none; font-size: 1.12rem; font-weight: 600; cursor: pointer; color: #7a756c; padding-bottom: 8px; display: inline-flex; align-items: center; gap: 8px;"
+            >
+              <i class="fa-solid fa-clock-rotate-left"></i> Order History (<span id="donorHistoryCount">0</span>)
+            </button>
+          </div>
+          <button
+            id="donorClearHistoryBtn"
+            class="btn btn-sm"
+            onclick="App.clearOrderHistory()"
+            style="display: none; align-items: center; gap: 6px; font-size: 0.82rem; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-weight: 600; margin-bottom: 6px;"
+            title="Clear all completed and claimed order history"
+          >
+            <i class="fa-solid fa-trash-can"></i> Clear History
+          </button>
+        </div>
+
+        <!-- Active Food Listings Feed (Only status === 'posted') -->
+        <div id="donorActiveSection">
+          <div class="cards-grid" id="donorDonationsFeed">
+            <!-- Injected dynamically via App.renderDonorDashboard -->
+          </div>
+        </div>
+
+        <!-- Order History Feed (Claimed, Picked Up, Delivered, Served) -->
+        <div id="donorHistorySection" style="display: none;">
+          <div class="cards-grid" id="donorHistoryFeed">
+            <!-- Injected dynamically via App.renderDonorDashboard -->
+          </div>
         </div>
 
         <!-- Tips Section (§4.3) -->
@@ -983,14 +1020,13 @@
 
         <form id="authForm">
           <div class="form-group">
-            <label class="form-label">Full Name or Business Name</label>
+            <label class="form-label">Full Name or Organization Name</label>
             <input
               type="text"
               class="form-control"
               id="authNameInput"
-              placeholder="e.g. Grand Hyatt Banquet / Robin Hood Army"
+              placeholder="e.g. Acme Cafe / Helping Hands NGO / Priya Sharma"
               required
-              value="Grand Hyatt Banquet"
             />
           </div>
 
@@ -1002,7 +1038,6 @@
               id="authEmailInput"
               placeholder="name@example.com"
               required
-              value="kitchen@hyatt.com"
             />
           </div>
 
@@ -1116,6 +1151,32 @@
       </div>
     </div>
 
+    <!-- Global In-App UI Toast Notification System -->
+    <div id="uiToastContainer" class="ui-toast-container" aria-live="polite"></div>
+
+    <!-- Global In-App Custom Confirmation & Alert Modal -->
+    <div id="uiModalOverlay" class="modal-overlay" style="z-index: 2000;">
+      <div class="modal-card" style="max-width: 440px; padding: 28px; text-align: center; border-radius: 16px;">
+        <div id="uiModalIcon" style="font-size: 2.4rem; margin-bottom: 12px; color: var(--color-forest-green);">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h3 id="uiModalTitle" style="font-size: 1.25rem; font-weight: 700; color: #282420; margin-bottom: 8px;">
+          Notification
+        </h3>
+        <p id="uiModalMessage" style="font-size: 0.95rem; color: #666; line-height: 1.5; margin-bottom: 22px;">
+          Message goes here
+        </p>
+        <div id="uiModalActions" style="display: flex; gap: 12px; justify-content: center;">
+          <button id="uiModalCancelBtn" class="btn btn-outline-green" style="flex: 1; padding: 10px; display: none;">
+            Cancel
+          </button>
+          <button id="uiModalConfirmBtn" class="btn btn-primary" style="flex: 1; padding: 10px; background: var(--color-forest-green); border-color: var(--color-forest-green);">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Footer (§4.1) -->
     <footer class="site-footer">
       <div class="footer-links">
@@ -1125,7 +1186,8 @@
         <a
           href="#"
           onclick="
-            alert('Contact: support@plateshare.org | Helpline: 1800-FOOD-SAVE')
+            event.preventDefault();
+            App.showToast('Support: support@plateshare.org | Toll-free: 1800-FOOD-SAVE', 'info', 'Contact PlateShare');
           "
           >Contact</a
         >
@@ -1136,7 +1198,7 @@
     </footer>
 
     <!-- App Scripts -->
-    <script src="js/data.js?v=2.0"></script>
-    <script src="js/app.js?v=2.0"></script>
+    <script src="js/data.js?v=3.1"></script>
+    <script src="js/app.js?v=3.1"></script>
   </body>
 </html>

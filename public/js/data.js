@@ -235,14 +235,23 @@ const PlateStore = {
     }
     return {
       role: 'visitor', // 'visitor', 'donor', 'ngo', 'community'
-      name: 'Guest Visitor',
-      org: 'Community Member',
-      email: 'visitor@example.com'
+      name: 'Guest',
+      org: 'Visitor',
+      email: '',
+      isLoggedIn: false
     };
   },
 
   setCurrentUser(user) {
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+  },
+
+  clearOrderHistory() {
+    const list = this.getDonations();
+    // Keep only active unreserved items
+    const remaining = list.filter(d => d.status === 'posted');
+    this.saveDonations(remaining);
+    return remaining;
   },
 
   resetDefaults() {
