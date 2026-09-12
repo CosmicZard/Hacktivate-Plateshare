@@ -284,9 +284,29 @@ const PlateStore = {
     return review;
   },
 
+  BOOKMARKS_KEY: 'plateshare_hotel_bookmarks_v1',
+
+  getBookmarkedHotels() {
+    const raw = localStorage.getItem(this.BOOKMARKS_KEY);
+    if (!raw) return ['rest-1', 'rest-5']; // Default saved hotels for demo delight
+    try { return JSON.parse(raw); } catch (e) { return ['rest-1', 'rest-5']; }
+  },
+
+  toggleHotelBookmark(hotelId) {
+    let saved = this.getBookmarkedHotels();
+    if (saved.includes(hotelId)) {
+      saved = saved.filter(id => id !== hotelId);
+    } else {
+      saved.push(hotelId);
+    }
+    localStorage.setItem(this.BOOKMARKS_KEY, JSON.stringify(saved));
+    return saved.includes(hotelId);
+  },
+
   resetDefaults() {
     localStorage.removeItem(this.STORAGE_KEY);
     localStorage.removeItem(this.REVIEWS_KEY);
+    localStorage.removeItem(this.BOOKMARKS_KEY);
     return this.getDonations();
   }
 };
@@ -359,129 +379,501 @@ const DEFAULT_REVIEWS = [
   }
 ];
 
-// Restaurant Food Rescue Badges & Certificates Data
+// Verified Activity Badge Roadmap: 5 Levels of Food Rescue Recognition
+const BADGE_ROADMAP = [
+  {
+    level: 1,
+    id: 'badge-lvl-1',
+    name: 'Starter Rescue',
+    badgeTitle: 'Starter',
+    iconType: 'medal-bronze',
+    iconText: '3',
+    iconClass: 'fa-solid fa-medal',
+    iconColor: '#c27803',
+    ribbonBg: '#3b82f6',
+    ribbonColor: '#ffffff',
+    targetMeals: 10,
+    unit: 'Verified Meals',
+    tierBadgeColor: '#059669',
+    tierBadgeBg: '#d1fae5',
+    cardBg: '#faf8f2',
+    border: '1.5px solid #fde68a',
+    unlocked: true,
+    desc: 'Awarded upon successfully completing and distributing your first 10 NGO-verified meals.'
+  },
+  {
+    level: 2,
+    id: 'badge-lvl-2',
+    name: 'Food Saver',
+    badgeTitle: 'Food Saver',
+    iconType: 'medal-silver',
+    iconText: '2',
+    iconClass: 'fa-solid fa-medal',
+    iconColor: '#9333ea',
+    ribbonBg: '#3b82f6',
+    ribbonColor: '#ffffff',
+    targetMeals: 50,
+    unit: 'Verified Meals',
+    tierBadgeColor: '#059669',
+    tierBadgeBg: '#d1fae5',
+    cardBg: '#faf8f2',
+    border: '1.5px solid #fde68a',
+    unlocked: true,
+    desc: 'Awarded for surpassing 50 verified rescued meals with consistent packaging and timely handover.'
+  },
+  {
+    level: 3,
+    id: 'badge-lvl-3',
+    name: 'Food Hero',
+    badgeTitle: 'Food Hero',
+    iconType: 'medal-gold',
+    iconText: '1',
+    iconClass: 'fa-solid fa-medal',
+    iconColor: '#ea580c',
+    ribbonBg: '#3b82f6',
+    ribbonColor: '#ffffff',
+    targetMeals: 250,
+    unit: 'Verified Meals',
+    tierBadgeColor: '#059669',
+    tierBadgeBg: '#d1fae5',
+    cardBg: '#faf8f2',
+    border: '1.5px solid #fde68a',
+    unlocked: true,
+    desc: 'Awarded for rescuing over 250 surplus meals to community shelters with full temperature compliance.'
+  },
+  {
+    level: 4,
+    id: 'badge-lvl-4',
+    name: 'Community Champion',
+    badgeTitle: 'Community Champion',
+    iconType: 'diamond',
+    iconClass: 'fa-solid fa-gem',
+    iconColor: '#93c5fd',
+    targetMeals: 1000,
+    currentMeals: 587,
+    unit: 'Verified Meals',
+    tierBadgeColor: '#0d9488',
+    tierBadgeBg: '#ccfbf1',
+    cardBg: '#ffffff',
+    border: '1.5px solid #e2e8f0',
+    unlocked: false,
+    desc: 'Diverted 1,000+ meals. Recognizes premier kitchens powering weekly feeding networks.'
+  },
+  {
+    level: 5,
+    id: 'badge-lvl-5',
+    name: 'PlateShare Legend',
+    badgeTitle: 'PlateShare Legend',
+    iconType: 'trophy',
+    iconClass: 'fa-solid fa-trophy',
+    iconColor: '#a8a29e',
+    targetMeals: 5000,
+    currentMeals: 587,
+    unit: 'Verified Meals',
+    tierBadgeColor: '#78716c',
+    tierBadgeBg: '#f5f5f4',
+    cardBg: '#ffffff',
+    border: '1.5px solid #e2e8f0',
+    unlocked: false,
+    desc: 'The pinnacle of food rescue: 5,000+ meals saved from waste, preventing over 5 tons of CO₂.'
+  }
+];
+
+// Enterprise & Business Profile Recognition
 const RESTAURANT_AWARDS = [
   {
     id: 'rest-1',
+    name: 'The Taj Lands End & Seafront Banquets',
+    category: 'Luxury Hotel & Banquets',
+    categoryKey: 'luxury',
+    location: 'BJ Road, Bandstand, Bandra West, Mumbai',
+    cityArea: 'Bandra West',
+    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
+    currentMeals: 5420,
+    highestBadge: 'PlateShare Legend',
+    highestBadgeLevel: 5,
+    stats: {
+      mealsRescued: 5420,
+      kgSaved: 2439,
+      co2Prevented: '6.1 Tons',
+      activeMonths: 18
+    },
+    tier: 'Level 5 · PlateShare Legend',
+    tierColor: '#b45309',
+    tierBg: '#fef3c7',
+    rating: 4.98,
+    reviewCount: 56,
+    fssaiRating: 'Grade A+ (100% Passed)',
+    quote: 'The banquet staff maintains pristine cold-chain packing. Fed over 650 children across Mumbai rehabilitation centers with five-star nutritional meals.',
+    reviewerOrg: 'Robin Hood Army & Roti Bank',
+    badges: [
+      { id: 'b1', name: 'Starter Rescue (L1)', icon: 'fa-medal', desc: '10 Meals verified', color: '#c27803' },
+      { id: 'b2', name: 'Food Saver (L2)', icon: 'fa-medal', desc: '50 Meals verified', color: '#9333ea' },
+      { id: 'b3', name: 'Food Hero (L3)', icon: 'fa-medal', desc: '250 Meals verified', color: '#ea580c' },
+      { id: 'b4', name: 'Community Champion (L4)', icon: 'fa-gem', desc: '1,000+ Meals verified', color: '#0284c7' },
+      { id: 'b5', name: 'PlateShare Legend (L5)', icon: 'fa-trophy', desc: '5,000+ Meals verified', color: '#b45309' }
+    ],
+    certificate: {
+      id: 'CERT-PS-2026-0999',
+      title: 'Level 5 PlateShare Legend Accreditation',
+      issuer: 'PlateShare Global Zero-Waste Council',
+      issueDate: 'August 30, 2026',
+      validUntil: 'August 2027',
+      level: 'Level 5 Pinnacle Honors'
+    }
+  },
+  {
+    id: 'rest-2',
     name: 'Grand Hyatt Banquet Hall',
-    category: 'Luxury Hotel & Convention Center',
-    location: 'Bandra Kurla Complex, Mumbai',
+    category: 'Luxury Hotel & Banquets',
+    categoryKey: 'luxury',
+    location: 'Bandra Kurla Complex (BKC), Mumbai',
+    cityArea: 'BKC',
     image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
+    currentMeals: 4850,
+    highestBadge: 'Community Champion',
+    highestBadgeLevel: 4,
     stats: {
       mealsRescued: 4850,
       kgSaved: 2182,
       co2Prevented: '5.4 Tons',
       activeMonths: 14
     },
-    tier: 'Platinum Champion',
-    tierColor: '#4338ca',
-    tierBg: '#e0e7ff',
-    rating: 4.9,
+    tier: 'Level 4 · Community Champion',
+    tierColor: '#0284c7',
+    tierBg: '#e0f2fe',
+    rating: 4.90,
     reviewCount: 38,
+    fssaiRating: 'Grade A+ (100% Passed)',
+    quote: 'Always hot, perfectly insulated in food-grade thermo-packs. Their immediate OTP dispatch ensures safe handover in under 15 minutes.',
+    reviewerOrg: 'Kalanagar Outreach Shelter',
     badges: [
-      { id: 'b1', name: 'Zero Waste Star', icon: 'fa-star', desc: 'Over 4,000 meals rescued without a single incident', color: '#eab308' },
-      { id: 'b2', name: 'Rapid Dispatch', icon: 'fa-bolt', desc: 'Average pickup coordination under 18 minutes', color: '#3b82f6' },
-      { id: 'b3', name: 'FSSAI Gold Standard', icon: 'fa-shield-halved', desc: '100% compliant food safety temperature logging', color: '#16a34a' },
-      { id: 'b4', name: 'Hunger Hero', icon: 'fa-medal', desc: 'Supported 12+ partner NGOs and community shelters', color: '#a855f7' }
+      { id: 'b1', name: 'Starter Rescue (L1)', icon: 'fa-medal', desc: '10 Meals verified', color: '#c27803' },
+      { id: 'b2', name: 'Food Saver (L2)', icon: 'fa-medal', desc: '50 Meals verified', color: '#9333ea' },
+      { id: 'b3', name: 'Food Hero (L3)', icon: 'fa-medal', desc: '250 Meals verified', color: '#ea580c' },
+      { id: 'b4', name: 'Community Champion (L4)', icon: 'fa-gem', desc: '1,000+ Meals verified', color: '#0284c7' }
     ],
     certificate: {
       id: 'CERT-PS-2026-0891',
-      title: 'Certified Zero-Food-Waste Champion',
+      title: 'Level 4 Community Champion Certificate',
       issuer: 'PlateShare & Food Rescue Alliance',
       issueDate: 'August 15, 2026',
       validUntil: 'August 2027',
-      level: 'Platinum Grade Accreditation'
+      level: 'Level 4 Champion Accreditation'
     }
   },
   {
-    id: 'rest-2',
+    id: 'rest-3',
+    name: 'The Oberoi Trident Marine Pavilion',
+    category: 'Luxury Hotel & Banquets',
+    categoryKey: 'luxury',
+    location: 'Nariman Point, Marine Drive, Mumbai',
+    cityArea: 'Marine Drive',
+    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80',
+    currentMeals: 6120,
+    highestBadge: 'PlateShare Legend',
+    highestBadgeLevel: 5,
+    stats: {
+      mealsRescued: 6120,
+      kgSaved: 2754,
+      co2Prevented: '6.9 Tons',
+      activeMonths: 20
+    },
+    tier: 'Level 5 · PlateShare Legend',
+    tierColor: '#b45309',
+    tierBg: '#fef3c7',
+    rating: 4.97,
+    reviewCount: 64,
+    fssaiRating: 'Grade A+ (100% Passed)',
+    quote: 'Setting the gold benchmark for hotel surplus food donation. Every batch includes dietary labels, reheating guidance, and allergen lists.',
+    reviewerOrg: 'Seva Kitchen Foundation',
+    badges: [
+      { id: 'b1', name: 'Starter Rescue (L1)', icon: 'fa-medal', desc: '10 Meals verified', color: '#c27803' },
+      { id: 'b2', name: 'Food Saver (L2)', icon: 'fa-medal', desc: '50 Meals verified', color: '#9333ea' },
+      { id: 'b3', name: 'Food Hero (L3)', icon: 'fa-medal', desc: '250 Meals verified', color: '#ea580c' },
+      { id: 'b4', name: 'Community Champion (L4)', icon: 'fa-gem', desc: '1,000+ Meals verified', color: '#0284c7' },
+      { id: 'b5', name: 'PlateShare Legend (L5)', icon: 'fa-trophy', desc: '5,000+ Meals verified', color: '#b45309' }
+    ],
+    certificate: {
+      id: 'CERT-PS-2026-0920',
+      title: 'Level 5 Pinnacle Food Stewardship Honors',
+      issuer: 'PlateShare Board of Governors',
+      issueDate: 'August 1, 2026',
+      validUntil: 'August 2027',
+      level: 'Level 5 Pinnacle Honors'
+    }
+  },
+  {
+    id: 'rest-4',
     name: 'Spice Route Fine Dining',
-    category: 'Fine Dining & Banquet',
-    location: 'Santacruz West, Mumbai',
+    category: 'Fine Dining & Restos',
+    categoryKey: 'finedining',
+    location: '14 Linking Road, Santacruz West, Mumbai',
+    cityArea: 'Santacruz West',
     image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+    currentMeals: 2940,
+    highestBadge: 'Community Champion',
+    highestBadgeLevel: 4,
     stats: {
       mealsRescued: 2940,
       kgSaved: 1323,
       co2Prevented: '3.2 Tons',
       activeMonths: 9
     },
-    tier: 'Gold Guardian',
-    tierColor: '#b45309',
-    tierBg: '#fef3c7',
-    rating: 4.95,
+    tier: 'Level 4 · Community Champion',
+    tierColor: '#0284c7',
+    tierBg: '#e0f2fe',
+    rating: 4.92,
     reviewCount: 26,
+    fssaiRating: 'Grade A+ (100% Passed)',
+    quote: 'Top tier biryani and paneer gravies packed fresh right after dinner service. Truly respectful feeding for our youth shelters.',
+    reviewerOrg: 'Feeding India Fellowship',
     badges: [
-      { id: 'b1', name: 'Gold Guardian', icon: 'fa-award', desc: 'Surpassed 2,500 safely distributed surplus meals', color: '#d97706' },
-      { id: 'b2', name: 'Thermal Master', icon: 'fa-fire-flame-curved', desc: 'Consistently maintains hot food chain above 65°C', color: '#ef4444' },
-      { id: 'b3', name: 'Community Pillar', icon: 'fa-heart', desc: 'Direct support to Santacruz local volunteer networks', color: '#ec4899' }
+      { id: 'b1', name: 'Starter Rescue (L1)', icon: 'fa-medal', desc: '10 Meals verified', color: '#c27803' },
+      { id: 'b2', name: 'Food Saver (L2)', icon: 'fa-medal', desc: '50 Meals verified', color: '#9333ea' },
+      { id: 'b3', name: 'Food Hero (L3)', icon: 'fa-medal', desc: '250 Meals verified', color: '#ea580c' },
+      { id: 'b4', name: 'Community Champion (L4)', icon: 'fa-gem', desc: '1,000+ Meals verified', color: '#0284c7' }
     ],
     certificate: {
       id: 'CERT-PS-2026-0742',
-      title: 'Excellence in Sustainable Food Recovery',
+      title: 'Level 4 Sustainable Food Recovery Honors',
       issuer: 'PlateShare Sustainability Board',
       issueDate: 'July 1, 2026',
       validUntil: 'July 2027',
-      level: 'Gold Grade Accreditation'
+      level: 'Level 4 Champion Accreditation'
     }
   },
   {
-    id: 'rest-3',
+    id: 'rest-5',
+    name: 'Bombay Canteen & Regional Kitchen',
+    category: 'Fine Dining & Restos',
+    categoryKey: 'finedining',
+    location: 'Kamala Mills Compound, Lower Parel, Mumbai',
+    cityArea: 'Lower Parel',
+    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+    currentMeals: 480,
+    highestBadge: 'Food Hero',
+    highestBadgeLevel: 3,
+    stats: {
+      mealsRescued: 480,
+      kgSaved: 216,
+      co2Prevented: '0.6 Tons',
+      activeMonths: 4
+    },
+    tier: 'Level 3 · Food Hero',
+    tierColor: '#ea580c',
+    tierBg: '#ffedd5',
+    rating: 4.87,
+    reviewCount: 22,
+    fssaiRating: 'Grade A (100% Passed)',
+    quote: 'Chef-curated surplus meal kits with exceptional ingredients. Volunteers love picking up from their dedicated back-dock dispatch team.',
+    reviewerOrg: 'Annamrita Foundation',
+    badges: [
+      { id: 'b1', name: 'Starter Rescue (L1)', icon: 'fa-medal', desc: '10 Meals verified', color: '#c27803' },
+      { id: 'b2', name: 'Food Saver (L2)', icon: 'fa-medal', desc: '50 Meals verified', color: '#9333ea' },
+      { id: 'b3', name: 'Food Hero (L3)', icon: 'fa-medal', desc: '250 Meals verified', color: '#ea580c' }
+    ],
+    certificate: {
+      id: 'CERT-PS-2026-0419',
+      title: 'Level 3 Food Hero Certificate',
+      issuer: 'PlateShare Culinary Alliance',
+      issueDate: 'April 19, 2026',
+      validUntil: 'April 2027',
+      level: 'Level 3 Hero Certification'
+    }
+  },
+  {
+    id: 'rest-6',
     name: 'Artisan Sourdough & Patisserie',
-    category: 'Bakery & Cafe',
+    category: 'Cafes & Bakeries',
+    categoryKey: 'cafe',
     location: 'Hill Road, Bandra West, Mumbai',
+    cityArea: 'Bandra West',
     image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
+    currentMeals: 1680,
+    highestBadge: 'Community Champion',
+    highestBadgeLevel: 4,
     stats: {
       mealsRescued: 1680,
       kgSaved: 756,
       co2Prevented: '1.8 Tons',
       activeMonths: 6
     },
-    tier: 'Silver Rescuer',
-    tierColor: '#475569',
-    tierBg: '#f1f5f9',
+    tier: 'Level 4 · Community Champion',
+    tierColor: '#0284c7',
+    tierBg: '#e0f2fe',
     rating: 4.88,
     reviewCount: 19,
+    fssaiRating: 'Grade A+ (100% Passed)',
+    quote: 'Daily surplus artisan breads, buns, and quiches. Freshly baked with pure butter, nourishing dozens of children in nearby orphanages.',
+    reviewerOrg: 'St. Jude Child Care Center',
     badges: [
-      { id: 'b1', name: 'Daily Contributor', icon: 'fa-calendar-check', desc: 'Over 100 consecutive days of surplus bakery sharing', color: '#0ea5e9' },
-      { id: 'b2', name: 'Eco-Packaging Star', icon: 'fa-box-tissue', desc: '100% plastic-free biodegradable packaging', color: '#10b981' }
+      { id: 'b1', name: 'Starter Rescue (L1)', icon: 'fa-medal', desc: '10 Meals verified', color: '#c27803' },
+      { id: 'b2', name: 'Food Saver (L2)', icon: 'fa-medal', desc: '50 Meals verified', color: '#9333ea' },
+      { id: 'b3', name: 'Food Hero (L3)', icon: 'fa-medal', desc: '250 Meals verified', color: '#ea580c' },
+      { id: 'b4', name: 'Community Champion (L4)', icon: 'fa-gem', desc: '1,000+ Meals verified', color: '#0284c7' }
     ],
     certificate: {
       id: 'CERT-PS-2026-0610',
-      title: 'Community Nutrition & Zero-Waste Certificate',
+      title: 'Level 4 Community Nutrition Certificate',
       issuer: 'PlateShare Metro Initiative',
       issueDate: 'June 10, 2026',
       validUntil: 'June 2027',
-      level: 'Silver Grade Accreditation'
+      level: 'Level 4 Champion Accreditation'
     }
   },
   {
-    id: 'rest-4',
+    id: 'rest-7',
+    name: 'Blue Tokai Roasters & Fresh Kitchen',
+    category: 'Cafes & Bakeries',
+    categoryKey: 'cafe',
+    location: 'Perry Cross Road, Bandra West, Mumbai',
+    cityArea: 'Bandra West',
+    image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80',
+    currentMeals: 85,
+    highestBadge: 'Food Saver',
+    highestBadgeLevel: 2,
+    stats: {
+      mealsRescued: 85,
+      kgSaved: 38,
+      co2Prevented: '0.1 Tons',
+      activeMonths: 2
+    },
+    tier: 'Level 2 · Food Saver',
+    tierColor: '#9333ea',
+    tierBg: '#f3e8ff',
+    rating: 4.80,
+    reviewCount: 14,
+    fssaiRating: 'Grade A (100% Passed)',
+    quote: 'Wraps, cold-pressed juices, and fresh paninis are sealed hygienically in kraft paper packs every evening. Swift seamless pickup.',
+    reviewerOrg: 'Bandra Youth Solidarity',
+    badges: [
+      { id: 'b1', name: 'Starter Rescue (L1)', icon: 'fa-medal', desc: '10 Meals verified', color: '#c27803' },
+      { id: 'b2', name: 'Food Saver (L2)', icon: 'fa-medal', desc: '50 Meals verified', color: '#9333ea' }
+    ],
+    certificate: {
+      id: 'CERT-PS-2026-0215',
+      title: 'Level 2 Food Saver Recognition',
+      issuer: 'PlateShare Urban Cafe Guild',
+      issueDate: 'February 15, 2026',
+      validUntil: 'February 2027',
+      level: 'Level 2 Food Saver Tier'
+    }
+  },
+  {
+    id: 'rest-8',
     name: 'Royal Heritage Wedding Banquets',
-    category: 'Large Event Hall & Catering',
+    category: 'Luxury Hotel & Banquets',
+    categoryKey: 'luxury',
     location: 'SV Road, Khar West, Mumbai',
+    cityArea: 'Khar West',
     image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+    currentMeals: 3620,
+    highestBadge: 'Community Champion',
+    highestBadgeLevel: 4,
     stats: {
       mealsRescued: 3620,
       kgSaved: 1629,
       co2Prevented: '4.1 Tons',
       activeMonths: 11
     },
-    tier: 'Gold Guardian',
-    tierColor: '#b45309',
-    tierBg: '#fef3c7',
+    tier: 'Level 4 · Community Champion',
+    tierColor: '#0284c7',
+    tierBg: '#e0f2fe',
     rating: 4.85,
     reviewCount: 31,
+    fssaiRating: 'Grade A+ (100% Passed)',
+    quote: 'Massive wedding surplus handled with surgical precision. Saves over 200kg of royal feasts from landfill disposal every weekend.',
+    reviewerOrg: 'Khar Community Relief Hub',
     badges: [
-      { id: 'b1', name: 'Mega Event Rescuer', icon: 'fa-people-group', desc: 'Handled over 15 wedding banquet surplus rescues > 100 meals each', color: '#f59e0b' },
-      { id: 'b2', name: 'Night Owl Hero', icon: 'fa-moon', desc: 'Swift coordination for late-night post-event collections', color: '#6366f1' }
+      { id: 'b1', name: 'Starter Rescue (L1)', icon: 'fa-medal', desc: '10 Meals verified', color: '#c27803' },
+      { id: 'b2', name: 'Food Saver (L2)', icon: 'fa-medal', desc: '50 Meals verified', color: '#9333ea' },
+      { id: 'b3', name: 'Food Hero (L3)', icon: 'fa-medal', desc: '250 Meals verified', color: '#ea580c' },
+      { id: 'b4', name: 'Community Champion (L4)', icon: 'fa-gem', desc: '1,000+ Meals verified', color: '#0284c7' }
     ],
     certificate: {
       id: 'CERT-PS-2026-0524',
-      title: 'Large-Scale Banquet Food Preservation Honors',
+      title: 'Level 4 Large-Scale Banquet Preservation Honors',
       issuer: 'National Food Recovery Network & PlateShare',
       issueDate: 'May 20, 2026',
       validUntil: 'May 2027',
-      level: 'Gold Grade Accreditation'
+      level: 'Level 4 Champion Accreditation'
+    }
+  },
+  {
+    id: 'rest-9',
+    name: 'Green Earth Zero-Waste Organic Bistro',
+    category: 'Zero-Waste & Organic',
+    categoryKey: 'zerowaste',
+    location: '12th Road, Khar West, Mumbai',
+    cityArea: 'Khar West',
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',
+    currentMeals: 340,
+    highestBadge: 'Food Hero',
+    highestBadgeLevel: 3,
+    stats: {
+      mealsRescued: 340,
+      kgSaved: 153,
+      co2Prevented: '0.4 Tons',
+      activeMonths: 3
+    },
+    tier: 'Level 3 · Food Hero',
+    tierColor: '#ea580c',
+    tierBg: '#ffedd5',
+    rating: 4.93,
+    reviewCount: 20,
+    fssaiRating: 'Grade A+ (100% Passed)',
+    quote: 'Pure farm-to-table organic food. 100% biodegradable packaging with compostable seals. A beacon of modern sustainable hospitality.',
+    reviewerOrg: 'EcoLife Mumbai Action',
+    badges: [
+      { id: 'b1', name: 'Starter Rescue (L1)', icon: 'fa-medal', desc: '10 Meals verified', color: '#c27803' },
+      { id: 'b2', name: 'Food Saver (L2)', icon: 'fa-medal', desc: '50 Meals verified', color: '#9333ea' },
+      { id: 'b3', name: 'Food Hero (L3)', icon: 'fa-medal', desc: '250 Meals verified', color: '#ea580c' }
+    ],
+    certificate: {
+      id: 'CERT-PS-2026-0312',
+      title: 'Level 3 Zero-Waste Culinary Honors',
+      issuer: 'Organic Food Alliance & PlateShare',
+      issueDate: 'March 12, 2026',
+      validUntil: 'March 2027',
+      level: 'Level 3 Hero Certification'
+    }
+  },
+  {
+    id: 'rest-10',
+    name: 'The Daily Neighborhood Deli',
+    category: 'Cafes & Bakeries',
+    categoryKey: 'cafe',
+    location: 'Pali Hill, Bandra West, Mumbai',
+    cityArea: 'Bandra West',
+    image: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&w=800&q=80',
+    currentMeals: 18,
+    highestBadge: 'Starter Rescue',
+    highestBadgeLevel: 1,
+    stats: {
+      mealsRescued: 18,
+      kgSaved: 8,
+      co2Prevented: '0.02 Tons',
+      activeMonths: 1
+    },
+    tier: 'Level 1 · Starter Rescue',
+    tierColor: '#c27803',
+    tierBg: '#fef3c7',
+    rating: 4.76,
+    reviewCount: 8,
+    fssaiRating: 'Grade A (100% Passed)',
+    quote: 'Newly onboarded kitchen making prompt evening donations of fresh soups, salads, and focaccia. Very polite kitchen crew!',
+    reviewerOrg: 'Pali Hill Community Care',
+    badges: [
+      { id: 'b1', name: 'Starter Rescue (L1)', icon: 'fa-medal', desc: '10 Meals verified', color: '#c27803' }
+    ],
+    certificate: {
+      id: 'CERT-PS-2026-0104',
+      title: 'Level 1 Starter Rescue Onboarding Certificate',
+      issuer: 'PlateShare Local Community Onboarding',
+      issueDate: 'January 4, 2026',
+      validUntil: 'January 2027',
+      level: 'Level 1 Starter Accreditation'
     }
   }
 ];

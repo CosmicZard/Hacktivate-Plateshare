@@ -8,7 +8,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
-    <link rel="stylesheet" href="css/styles.css?v=4.0" />
+    <link rel="stylesheet" href="css/styles.css?v=11.0" />
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>"
@@ -59,13 +59,6 @@
               style="font-size: 0.82rem; margin-right: 4px"
             ></i>
             Impact</a
-          >
-          <a href="#awards" data-view-target="awards" id="navAwardsLink"
-            ><i
-              class="fa-solid fa-award"
-              style="font-size: 0.85rem; margin-right: 4px; color: #f59e0b;"
-            ></i>
-            Badges & Certificates</a
           >
         </nav>
 
@@ -140,6 +133,9 @@
             </button>
             <button class="role-pill-btn" data-role="community">
               <i class="fa-solid fa-users"></i> Community
+            </button>
+            <button class="role-pill-btn" data-role="individual">
+              <i class="fa-solid fa-user"></i> Individual
             </button>
           </div>
         </div>
@@ -261,14 +257,24 @@
             <h2 class="dashboard-title">Donor Dashboard</h2>
             <p class="text-muted">Thanks for sharing your extra meals today.</p>
           </div>
-          <button
-            class="btn btn-orange btn-lg"
-            onclick="App.navigateTo('create-donation')"
-            id="donorPostDonationBtn"
-            style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600;"
-          >
-            <i class="fa-solid fa-plus-circle"></i> Post Donation
-          </button>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button
+              class="btn btn-outline-green btn-lg"
+              onclick="App.navigateTo('awards')"
+              id="donorAwardsBtn"
+              style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; background: #ffffff;"
+            >
+              <i class="fa-solid fa-award" style="color: #f59e0b;"></i> Badges & Certificates
+            </button>
+            <button
+              class="btn btn-orange btn-lg"
+              onclick="App.navigateTo('create-donation')"
+              id="donorPostDonationBtn"
+              style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600;"
+            >
+              <i class="fa-solid fa-plus-circle"></i> Post Donation
+            </button>
+          </div>
         </div>
 
         <!-- Quick Stats 3 Cards (§4.3) -->
@@ -303,6 +309,26 @@
               Food Rescued
             </div>
           </div>
+        </div>
+
+        <!-- Donor Recognition Banner -->
+        <div style="background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%); border: 1.5px solid #fde68a; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #fef08a; border: 1.5px solid #facc15; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #b45309; flex-shrink: 0;">
+              <i class="fa-solid fa-award"></i>
+            </div>
+            <div>
+              <div style="font-size: 1rem; font-weight: 800; color: #78350f; margin-bottom: 2px;">
+                Food Rescue Honors & Recognition
+              </div>
+              <div style="font-size: 0.84rem; color: #92400e;">
+                Track your 5-level milestone badges, digital hygiene certificates, and verified community impact.
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-forest btn-sm" onclick="App.navigateTo('awards')" style="font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-medal"></i> View Badges & Certificates
+          </button>
         </div>
 
         <!-- Tab navigation for Active Food Listings vs Order History -->
@@ -1085,18 +1111,60 @@
           </div>
         </div>
 
-        <!-- Filter Chips for Restaurant Tiers -->
-        <div style="display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;">
-          <span style="font-size: 0.9rem; font-weight: 700; color: #4a453e; margin-right: 6px;">Filter Level:</span>
-          <button class="badge-filter-btn active" data-tier="all" onclick="App.filterAwards('all')">All Honors</button>
-          <button class="badge-filter-btn" data-tier="Platinum Champion" onclick="App.filterAwards('Platinum Champion')">💎 Platinum Champions (4,000+ meals)</button>
-          <button class="badge-filter-btn" data-tier="Gold Guardian" onclick="App.filterAwards('Gold Guardian')">🥇 Gold Guardians (2,500+ meals)</button>
-          <button class="badge-filter-btn" data-tier="Silver Rescuer" onclick="App.filterAwards('Silver Rescuer')">🥈 Silver Rescuers (1,000+ meals)</button>
+        <!-- Sub-Navigation Navigation Pills matching reference image -->
+        <div style="display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;">
+          <button class="awards-tab-btn active" id="awardsTabRoadmap" onclick="App.switchAwardsTab('roadmap')">
+            <i class="fa-solid fa-ribbon"></i> Badges Roadmap
+          </button>
+          <button class="awards-tab-btn" id="awardsTabCerts" onclick="App.switchAwardsTab('certs')">
+            <i class="fa-solid fa-shield-halved"></i> Digital Certificates
+          </button>
         </div>
 
-        <!-- Restaurant Badges Grid -->
-        <div id="restaurantAwardsContainer" class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px;">
-          <!-- Injected dynamically via App.renderAwardsPage() -->
+        <!-- Section 1: Verified Activity Badge Roadmap (5 Levels from Reference Image) -->
+        <div id="awardsRoadmapSection">
+          <div style="margin-bottom: 18px;">
+            <h3 style="font-size: 1.35rem; font-weight: 800; color: #1f2937; margin-bottom: 4px;">Verified Activity Badge Roadmap</h3>
+            <p style="font-size: 0.9rem; color: #64748b; margin: 0;">Badges are awarded strictly upon NGO-verified completed rescues.</p>
+          </div>
+
+          <!-- 5-Level Badges Roadmap Grid -->
+          <div id="badgeRoadmapGrid">
+            <!-- Dynamically populated via App.renderBadgeRoadmap() -->
+          </div>
+
+          <!-- Section 2: Enterprise & Business Profile Recognition Section -->
+          <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-top: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #1f2937; margin-bottom: 4px;">Enterprise & Business Profile Badges</h3>
+                <p style="font-size: 0.88rem; color: #64748b; margin: 0;">Verified levels and accredited badges awarded to premier food donor kitchens.</p>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="badge-filter-btn active" data-lvl="all" onclick="App.filterEnterpriseBadges('all')">All Kitchens</button>
+                <button class="badge-filter-btn" data-lvl="4" onclick="App.filterEnterpriseBadges('4')">Level 4: Community Champions</button>
+              </div>
+            </div>
+
+            <!-- Restaurant Badges Grid -->
+            <div id="restaurantAwardsContainer" class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+              <!-- Injected dynamically via App.renderEnterpriseBadges() -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Digital Certificates Tab Panel -->
+        <div id="awardsCertsSection" style="display: none;">
+          <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 28px; text-align: center; margin-bottom: 24px;">
+            <i class="fa-solid fa-certificate" style="font-size: 2.6rem; color: #f59e0b; margin-bottom: 12px;"></i>
+            <h3 style="font-size: 1.35rem; color: #1f4d36; margin-bottom: 6px;">Verifiable Digital Certificates of Honor</h3>
+            <p style="font-size: 0.92rem; color: #64748b; max-width: 580px; margin: 0 auto 18px auto;">
+              Each certificate is cryptographically authenticated with a unique registry ID and QR code verifying meals diverted from waste.
+            </p>
+            <button class="btn btn-orange btn-sm" onclick="App.openCertModal('rest-1')">
+              <i class="fa-solid fa-eye"></i> View Current Hotel Accreditation Certificate
+            </button>
+          </div>
         </div>
 
         <!-- Certificate Modal Viewer -->
@@ -1132,6 +1200,100 @@
               <button class="btn btn-primary btn-sm" onclick="App.closeCertModal()" style="background: var(--color-forest-green); border-color: var(--color-forest-green);">
                 Done
               </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 9: INDIVIDUAL USER DASHBOARD / PARTNER HOTELS EXPLORER -->
+      <section id="view-individual" class="view-section">
+        <!-- Categorization Pills Strip -->
+        <div style="margin-bottom: 20px; padding-top: 6px;">
+          <div style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">
+            <i class="fa-solid fa-filter" style="margin-right: 4px;"></i> Categorize By Venue Type & Honors:
+          </div>
+          <div class="hotel-category-pills-wrap" id="individualCategoryPills">
+            <button class="hotel-category-pill active" data-category="all" onclick="App.filterIndividualCategory('all')">
+              🌟 All Hotels & Restos <span class="pill-count" id="countCatAll">10</span>
+            </button>
+            <button class="hotel-category-pill" data-category="top_rated" onclick="App.filterIndividualCategory('top_rated')">
+              🏆 Top Rated (4.9+ ★) <span class="pill-count" id="countCatTop">5</span>
+            </button>
+            <button class="hotel-category-pill" data-category="champions" onclick="App.filterIndividualCategory('champions')">
+              💎 Badge Leaders (L4 & L5) <span class="pill-count" id="countCatBadged">7</span>
+            </button>
+            <button class="hotel-category-pill" data-category="luxury" onclick="App.filterIndividualCategory('luxury')">
+              🏨 Luxury Hotels & Banquets <span class="pill-count" id="countCatLuxury">4</span>
+            </button>
+            <button class="hotel-category-pill" data-category="finedining" onclick="App.filterIndividualCategory('finedining')">
+              🍽️ Fine Dining & Restos <span class="pill-count" id="countCatFine">2</span>
+            </button>
+            <button class="hotel-category-pill" data-category="cafe" onclick="App.filterIndividualCategory('cafe')">
+              ☕ Cafes & Bakeries <span class="pill-count" id="countCatCafe">3</span>
+            </button>
+            <button class="hotel-category-pill" data-category="zerowaste" onclick="App.filterIndividualCategory('zerowaste')">
+              🌿 Zero-Waste Bistro <span class="pill-count" id="countCatZero">1</span>
+            </button>
+            <button class="hotel-category-pill" data-category="bookmarks" onclick="App.filterIndividualCategory('bookmarks')">
+              ❤️ My Saved / Favorites <span class="pill-count" id="countCatSaved">0</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Controls Toolbar -->
+        <div class="filter-controls" style="margin-bottom: 24px; padding: 16px 20px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px;">
+          <div class="search-input-wrap" style="flex: 2; min-width: 260px;">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input
+              type="text"
+              class="form-control"
+              id="individualSearchInput"
+              placeholder="Search hotels by name, area (Bandra, BKC), or cuisine..."
+              oninput="App.handleIndividualSearch(this.value)"
+              style="padding-left: 36px;"
+            />
+          </div>
+
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-size: 0.85rem; font-weight: 700; color: #475569; white-space: nowrap;">Badge Level:</label>
+              <select class="form-control form-control-sm" id="individualBadgeFilter" onchange="App.handleIndividualBadgeFilter(this.value)" style="width: auto; min-width: 140px;">
+                <option value="all">All Badges</option>
+                <option value="5">Level 5 · PlateShare Legend</option>
+                <option value="4">Level 4 · Community Champion</option>
+                <option value="3">Level 3 · Food Hero</option>
+                <option value="2">Level 2 · Food Saver</option>
+                <option value="1">Level 1 · Starter Rescue</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-size: 0.85rem; font-weight: 700; color: #475569; white-space: nowrap;">Sort by:</label>
+              <select class="form-control form-control-sm" id="individualSortSelect" onchange="App.handleIndividualSort(this.value)" style="width: auto; min-width: 150px;">
+                <option value="rating_desc">Highest Rating ★</option>
+                <option value="meals_desc">Most Rescued Meals</option>
+                <option value="badge_desc">Highest Badge Level</option>
+                <option value="name_asc">Name (A – Z)</option>
+              </select>
+            </div>
+
+            <button class="btn btn-sm btn-outline-green" onclick="App.resetIndividualFilters()" title="Reset search & filters">
+              <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Categorized Hotel Cards Grid -->
+        <div id="individualHotelsGrid" class="individual-hotels-grid">
+          <!-- Dynamically populated via App.renderIndividualPage() -->
+        </div>
+
+        <!-- Hotel Detail & Full Reviews Modal -->
+        <div class="modal-overlay" id="individualHotelModalOverlay">
+          <div class="modal-card" style="max-width: 720px; max-height: 90vh; overflow-y: auto; padding: 28px;">
+            <button class="modal-close-btn" onclick="App.closeHotelDetailModal()">&times;</button>
+            <div id="individualHotelModalBody">
+              <!-- Dynamically populated via App.openHotelDetailModal(hotelId) -->
             </div>
           </div>
         </div>
@@ -1208,6 +1370,7 @@
               </option>
               <option value="ngo">NGO / Food Rescue Organization</option>
               <option value="community">Community Volunteer / Resident</option>
+              <option value="individual">Individual</option>
             </select>
           </div>
 
@@ -1346,7 +1509,7 @@
     </footer>
 
     <!-- App Scripts -->
-    <script src="js/data.js?v=4.0"></script>
-    <script src="js/app.js?v=4.0"></script>
+    <script src="js/data.js?v=11.0"></script>
+    <script src="js/app.js?v=11.0"></script>
   </body>
 </html>

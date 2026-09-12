@@ -101,6 +101,7 @@ const App = {
       if (this.currentRole === 'donor') this.navigateTo('donor-dashboard');
       else if (this.currentRole === 'ngo') this.navigateTo('ngo-feed');
       else if (this.currentRole === 'community') this.navigateTo('community-feed');
+      else if (this.currentRole === 'individual') this.navigateTo('individual');
       else this.navigateTo('landing');
     }
   },
@@ -165,6 +166,7 @@ const App = {
         if (role === 'donor') this.navigateTo('donor-dashboard');
         else if (role === 'ngo') this.navigateTo('ngo-feed');
         else if (role === 'community') this.navigateTo('community-feed');
+        else if (role === 'individual') this.navigateTo('individual');
         else this.navigateTo('landing');
       });
     }
@@ -197,6 +199,7 @@ const App = {
         if (role === 'donor') this.navigateTo('donor-dashboard');
         else if (role === 'ngo') this.navigateTo('ngo-feed');
         else if (role === 'community') this.navigateTo('community-feed');
+        else if (role === 'individual') this.navigateTo('individual');
         else this.navigateTo('landing');
       });
     });
@@ -210,12 +213,12 @@ const App = {
 
     if (name && name.trim()) {
       user.name = name.trim();
-      user.org = org ? org.trim() : (role === 'donor' ? 'Donor Partner' : (role === 'ngo' ? 'Rescue Partner' : 'Community Volunteer'));
+      user.org = org ? org.trim() : (role === 'donor' ? 'Donor Partner' : (role === 'ngo' ? 'Rescue Partner' : (role === 'individual' ? 'Individual Citizen / Diner' : 'Community Volunteer')));
       user.isLoggedIn = true;
     } else {
       // Unauthenticated / Quick Switcher defaults: Show 'Guest' as requested
       user.name = 'Guest';
-      user.org = role === 'donor' ? 'Donor' : (role === 'ngo' ? 'NGO' : (role === 'community' ? 'Community' : 'Visitor'));
+      user.org = role === 'donor' ? 'Donor' : (role === 'ngo' ? 'NGO' : (role === 'community' ? 'Community' : (role === 'individual' ? 'Individual' : 'Visitor')));
       user.isLoggedIn = false;
     }
 
@@ -238,7 +241,8 @@ const App = {
         visitor: '<i class="fa-solid fa-eye"></i> Public Visitor View — Community food-rescue platform',
         donor: `<i class="fa-solid fa-hotel"></i> Donor Mode: Logged in as ${userLabel}`,
         ngo: `<i class="fa-solid fa-handshake-angle"></i> NGO Mode: Logged in as ${userLabel}`,
-        community: `<i class="fa-solid fa-users"></i> Community Mode: Logged in as ${userLabel}`
+        community: `<i class="fa-solid fa-users"></i> Community Mode: Logged in as ${userLabel}`,
+        individual: `<i class="fa-solid fa-user"></i> Individual Mode: Logged in as ${userLabel}`
       };
       bannerText.innerHTML = roleNames[this.currentRole] || 'PlateShare Platform';
     }
@@ -262,10 +266,12 @@ const App = {
     document.body.classList.toggle('role-donor', this.currentRole === 'donor');
     document.body.classList.toggle('role-ngo', this.currentRole === 'ngo');
     document.body.classList.toggle('role-community', this.currentRole === 'community');
+    document.body.classList.toggle('role-individual', this.currentRole === 'individual');
 
     document.querySelectorAll('.nav-donor-only').forEach(el => el.style.display = (this.currentRole === 'donor') ? 'inline-block' : 'none');
     document.querySelectorAll('.nav-ngo-only').forEach(el => el.style.display = (this.currentRole === 'ngo') ? 'inline-block' : 'none');
     document.querySelectorAll('.nav-community-only').forEach(el => el.style.display = (this.currentRole === 'community') ? 'inline-block' : 'none');
+    document.querySelectorAll('.nav-individual-only').forEach(el => el.style.display = (this.currentRole === 'individual') ? 'inline-block' : 'none');
 
     // Hide Find Meals from navbar when in donor mode or at donor page
     const findMealsLink = document.getElementById('navFindMealsLink');
@@ -305,6 +311,7 @@ const App = {
     else if (viewId === 'create-donation') this.renderCreateDonation();
     else if (viewId === 'impact') this.renderImpactPage();
     else if (viewId === 'awards') this.renderAwardsPage();
+    else if (viewId === 'individual') this.renderIndividualPage();
   },
 
   openModal() {
@@ -973,11 +980,19 @@ const App = {
       otpContainer.style.display = 'none';
       fallbackBox.style.display = 'flex';
       
-      actionButtonsContainer.innerHTML = `
-        <button class="btn btn-orange btn-lg" style="width:100%;" onclick="App.claimDonation('${item.id}')">
-          <i class="fa-solid fa-handshake"></i> Claim These Meals Now
-        </button>
-      `;
+      if (this.currentRole === 'individual') {
+        actionButtonsContainer.innerHTML = `
+          <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 14px; text-align: center; color: #64748b; font-size: 0.85rem; font-weight: 600;">
+            <i class="fa-solid fa-shield-halved" style="color:#0284c7; margin-right:4px;"></i> Surplus food claims are restricted to verified NGO partners and community kitchens.
+          </div>
+        `;
+      } else {
+        actionButtonsContainer.innerHTML = `
+          <button class="btn btn-orange btn-lg" style="width:100%;" onclick="App.claimDonation('${item.id}')">
+            <i class="fa-solid fa-handshake"></i> Claim These Meals Now
+          </button>
+        `;
+      }
     } else {
       otpContainer.style.display = 'block';
       fallbackBox.style.display = 'none';
@@ -1116,40 +1131,164 @@ const App = {
     this.renderRestaurantReviews(item);
   },
 
-  currentAwardsFilter: 'all',
+  switchAwardsTab(tab) {
+    const roadmapTab = document.getElementById('awardsTabRoadmap');
+    const certsTab = document.getElementById('awardsTabCerts');
 
-  filterAwards(tier) {
-    this.currentAwardsFilter = tier;
+    const roadmapSec = document.getElementById('awardsRoadmapSection');
+    const certsSec = document.getElementById('awardsCertsSection');
+
+    [roadmapTab, certsTab].forEach(t => { if (t) t.classList.remove('active'); });
+    [roadmapSec, certsSec].forEach(s => { if (s) s.style.display = 'none'; });
+
+    if (tab === 'roadmap') {
+      if (roadmapTab) roadmapTab.classList.add('active');
+      if (roadmapSec) roadmapSec.style.display = 'block';
+    } else if (tab === 'certs') {
+      if (certsTab) certsTab.classList.add('active');
+      if (certsSec) certsSec.style.display = 'block';
+    }
+  },
+
+  currentEnterpriseFilter: 'all',
+
+  filterEnterpriseBadges(lvl) {
+    this.currentEnterpriseFilter = lvl;
     document.querySelectorAll('.badge-filter-btn').forEach(btn => {
-      if (btn.getAttribute('data-tier') === tier) btn.classList.add('active');
+      if (btn.getAttribute('data-lvl') === lvl) btn.classList.add('active');
       else btn.classList.remove('active');
     });
-    this.renderAwardsPage();
+    this.renderEnterpriseBadges();
   },
 
   renderAwardsPage() {
+    this.renderBadgeRoadmap();
+    this.renderEnterpriseBadges();
+  },
+
+  // 5-Level Verified Activity Badge Roadmap strictly matching reference image
+  renderBadgeRoadmap() {
+    const container = document.getElementById('badgeRoadmapGrid');
+    if (!container) return;
+
+    container.innerHTML = BADGE_ROADMAP.map(badge => {
+      let iconMarkup = '';
+
+      if (badge.level === 1) {
+        iconMarkup = `
+          <svg width="52" height="56" viewBox="0 0 52 56" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto 10px auto;">
+            <path d="M19 18L13 2C13 2 17 0.5 21 3L26 14L31 3C35 0.5 39 2 39 2L33 18Z" fill="#3B82F6"/>
+            <path d="M13 2L20 4L26 14" stroke="#2563EB" stroke-width="1.2"/>
+            <path d="M39 2L32 4L26 14" stroke="#2563EB" stroke-width="1.2"/>
+            <circle cx="26" cy="34" r="17" fill="#b45309"/>
+            <circle cx="26" cy="34" r="14.5" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-dasharray="2 2" fill="none"/>
+            <text x="26" y="40.5" text-anchor="middle" font-size="18" font-weight="900" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">3</text>
+          </svg>
+        `;
+      } else if (badge.level === 2) {
+        iconMarkup = `
+          <svg width="52" height="56" viewBox="0 0 52 56" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto 10px auto;">
+            <path d="M19 18L13 2C13 2 17 0.5 21 3L26 14L31 3C35 0.5 39 2 39 2L33 18Z" fill="#3B82F6"/>
+            <path d="M13 2L20 4L26 14" stroke="#2563EB" stroke-width="1.2"/>
+            <path d="M39 2L32 4L26 14" stroke="#2563EB" stroke-width="1.2"/>
+            <circle cx="26" cy="34" r="17" fill="#c4b5fd"/>
+            <circle cx="26" cy="34" r="14.5" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-dasharray="2 2" fill="none"/>
+            <text x="26" y="40.5" text-anchor="middle" font-size="18" font-weight="900" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">2</text>
+          </svg>
+        `;
+      } else if (badge.level === 3) {
+        iconMarkup = `
+          <svg width="52" height="56" viewBox="0 0 52 56" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto 10px auto;">
+            <path d="M19 18L13 2C13 2 17 0.5 21 3L26 14L31 3C35 0.5 39 2 39 2L33 18Z" fill="#3B82F6"/>
+            <path d="M13 2L20 4L26 14" stroke="#2563EB" stroke-width="1.2"/>
+            <path d="M39 2L32 4L26 14" stroke="#2563EB" stroke-width="1.2"/>
+            <circle cx="26" cy="34" r="17" fill="#f59e0b"/>
+            <circle cx="26" cy="34" r="14.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-dasharray="2 2" fill="none"/>
+            <text x="26" y="40.5" text-anchor="middle" font-size="18" font-weight="900" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">1</text>
+          </svg>
+        `;
+      } else if (badge.level === 4) {
+        iconMarkup = `
+          <svg width="52" height="56" viewBox="0 0 52 56" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto 10px auto;">
+            <g transform="translate(4, 8)">
+              <polygon points="12,4 32,4 42,16 2,16" fill="#93c5fd"/>
+              <polygon points="12,4 22,4 22,16 16,16" fill="#bfdbfe"/>
+              <polygon points="22,4 32,4 28,16 22,16" fill="#60a5fa"/>
+              <polygon points="2,16 42,16 22,36" fill="#93c5fd"/>
+              <polygon points="16,16 28,16 22,36" fill="#60a5fa"/>
+              <polygon points="2,16 16,16 22,36" fill="#3b82f6" opacity="0.85"/>
+              <polygon points="28,16 42,16 22,36" fill="#1d4ed8" opacity="0.85"/>
+            </g>
+          </svg>
+        `;
+      } else {
+        iconMarkup = `
+          <svg width="52" height="56" viewBox="0 0 52 56" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto 10px auto;">
+            <g transform="translate(6, 6)">
+              <path d="M10 4H30V18C30 23.5 25.5 28 20 28C14.5 28 10 23.5 10 18V4Z" fill="#d6d3d1"/>
+              <path d="M10 8H5C3.3 8 2 9.3 2 11V13C2 16.3 4.7 19 8 19H10V16H8C6.3 16 5 14.7 5 13V11C5 10.4 5.4 10 6 10H10V8Z" fill="#a8a29e"/>
+              <path d="M30 8H35C36.7 8 38 9.3 38 11V13C38 16.3 35.3 19 32 19H30V16H32C33.7 16 35 14.7 35 13V11C35 10.4 34.6 10 34 10H30V8Z" fill="#a8a29e"/>
+              <rect x="18" y="28" width="4" height="7" fill="#a8a29e"/>
+              <rect x="11" y="35" width="18" height="5" rx="2" fill="#78716c"/>
+            </g>
+          </svg>
+        `;
+      }
+
+      const statusMarkup = badge.unlocked
+        ? `<div style="color: #059669; font-size: 0.82rem; font-weight: 800; display:flex; align-items:center; justify-content:center; gap:4px; margin-top: 8px;"><i class="fa-solid fa-check"></i> UNLOCKED</div>`
+        : `<div style="color: #94a3b8; font-size: 0.78rem; font-weight: 600; margin-top: 8px;">Progress: ${badge.currentMeals || 587}/${badge.targetMeals}</div>`;
+
+      const titleColor = badge.unlocked ? '#1f2937' : '#475569';
+      let roleBadgePill = '';
+      if (badge.level <= 3) {
+        let medalColor = badge.level === 1 ? '#c27803' : (badge.level === 2 ? '#8b5cf6' : '#ea580c');
+        roleBadgePill = `<span style="font-size: 0.8rem; color: #059669; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-medal" style="color: ${medalColor}; font-size: 0.74rem;"></i> ${badge.badgeTitle}</span>`;
+      } else if (badge.level === 4) {
+        roleBadgePill = `<span style="font-size: 0.8rem; color: #2dd4bf; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-gem" style="color: #99f6e4; font-size: 0.74rem;"></i> ${badge.badgeTitle}</span>`;
+      } else {
+        roleBadgePill = `<span style="font-size: 0.8rem; color: #a8a29e; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-trophy" style="color: #d6d3d1; font-size: 0.74rem;"></i> ${badge.badgeTitle}</span>`;
+      }
+
+      return `
+        <div class="roadmap-badge-box ${badge.unlocked ? 'unlocked' : 'locked'}">
+          <div>
+            ${iconMarkup}
+            <h4 style="font-size: 1.05rem; font-weight: 800; color: ${titleColor}; margin-bottom: 4px; line-height: 1.3;">${badge.name}</h4>
+            <div style="margin-bottom: 6px;">${roleBadgePill}</div>
+            <div style="font-size: 0.82rem; color: #64748b; font-weight: 600;">${badge.targetMeals} ${badge.unit}</div>
+          </div>
+          <div>
+            ${statusMarkup}
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+
+  renderEnterpriseBadges() {
     const container = document.getElementById('restaurantAwardsContainer');
     if (!container) return;
 
     let list = RESTAURANT_AWARDS;
-    if (this.currentAwardsFilter !== 'all') {
-      list = list.filter(r => r.tier === this.currentAwardsFilter);
+    if (this.currentEnterpriseFilter !== 'all') {
+      const lvl = parseInt(this.currentEnterpriseFilter, 10);
+      list = list.filter(r => r.highestBadgeLevel === lvl);
     }
 
     container.innerHTML = list.map(rest => {
-      const stars = '★'.repeat(Math.round(rest.rating));
       return `
         <div class="award-card">
           <div class="award-card-header">
             <img src="${rest.image}" alt="${rest.name}" loading="lazy" />
             <span class="award-tier-badge" style="background:${rest.tierBg}; color:${rest.tierColor};">
-              <i class="fa-solid fa-crown" style="margin-right:4px;"></i> ${rest.tier}
+              <i class="fa-solid fa-gem" style="margin-right:4px;"></i> ${rest.tier}
             </span>
           </div>
           <div class="award-card-body">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
               <div>
-                <h3 style="font-size: 1.15rem; font-weight: 700; color: #1f2937; margin-bottom: 2px;">${rest.name}</h3>
+                <h3 style="font-size: 1.12rem; font-weight: 700; color: #1f2937; margin-bottom: 2px;">${rest.name}</h3>
                 <span style="font-size: 0.8rem; color: #6b7280;"><i class="fa-solid fa-location-dot" style="color:var(--color-forest-green);"></i> ${rest.location}</span>
               </div>
               <div style="text-align: right;">
@@ -1162,21 +1301,21 @@ const App = {
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 8px; margin: 12px 0; text-align: center;">
               <div>
                 <div style="font-size: 0.95rem; font-weight: 800; color: var(--color-forest-green);">${rest.stats.mealsRescued.toLocaleString()}</div>
-                <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase;">Meals Saved</div>
+                <div style="font-size: 0.68rem; color: #64748b; text-transform: uppercase;">Meals Saved</div>
               </div>
               <div style="border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
                 <div style="font-size: 0.95rem; font-weight: 800; color: #c2410c;">${rest.stats.kgSaved} kg</div>
-                <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase;">Rescued</div>
+                <div style="font-size: 0.68rem; color: #64748b; text-transform: uppercase;">Rescued</div>
               </div>
               <div>
                 <div style="font-size: 0.95rem; font-weight: 800; color: #4338ca;">${rest.stats.co2Prevented}</div>
-                <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase;">CO₂ Avoided</div>
+                <div style="font-size: 0.68rem; color: #64748b; text-transform: uppercase;">CO₂ Avoided</div>
               </div>
             </div>
 
-            <!-- Earned Badges -->
+            <!-- Earned Roadmap Badges (Levels 1 to 5) -->
             <div style="margin-bottom: 14px;">
-              <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Earned Food Rescue Badges:</div>
+              <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Earned Roadmap Badges:</div>
               <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                 ${rest.badges.map(b => `
                   <span class="award-badge-pill" title="${b.desc}">
@@ -1220,6 +1359,358 @@ const App = {
     if (overlay) overlay.classList.remove('active');
   },
 
+  // =========================================================================
+  // INDIVIDUAL USER PORTAL: Categorized Partner Hotels, Ratings & Badges
+  // =========================================================================
+  currentIndividualCategory: 'all',
+  individualSearchQuery: '',
+  individualBadgeFilter: 'all',
+  individualSortBy: 'rating_desc',
+
+  renderIndividualPage() {
+    const grid = document.getElementById('individualHotelsGrid');
+    if (!grid) return;
+
+    const bookmarkedIds = PlateStore.getBookmarkedHotels();
+
+    // 1. Update Category Counts in Pill Buttons
+    const countAll = RESTAURANT_AWARDS.length;
+    const countTop = RESTAURANT_AWARDS.filter(r => r.rating >= 4.90).length;
+    const countBadged = RESTAURANT_AWARDS.filter(r => r.highestBadgeLevel >= 4).length;
+    const countLuxury = RESTAURANT_AWARDS.filter(r => r.categoryKey === 'luxury').length;
+    const countFine = RESTAURANT_AWARDS.filter(r => r.categoryKey === 'finedining').length;
+    const countCafe = RESTAURANT_AWARDS.filter(r => r.categoryKey === 'cafe').length;
+    const countZero = RESTAURANT_AWARDS.filter(r => r.categoryKey === 'zerowaste').length;
+    const countSaved = bookmarkedIds.length;
+
+    const elCountAll = document.getElementById('countCatAll');
+    const elCountTop = document.getElementById('countCatTop');
+    const elCountBadged = document.getElementById('countCatBadged');
+    const elCountLuxury = document.getElementById('countCatLuxury');
+    const elCountFine = document.getElementById('countCatFine');
+    const elCountCafe = document.getElementById('countCatCafe');
+    const elCountZero = document.getElementById('countCatZero');
+    const elCountSaved = document.getElementById('countCatSaved');
+
+    if (elCountAll) elCountAll.textContent = countAll;
+    if (elCountTop) elCountTop.textContent = countTop;
+    if (elCountBadged) elCountBadged.textContent = countBadged;
+    if (elCountLuxury) elCountLuxury.textContent = countLuxury;
+    if (elCountFine) elCountFine.textContent = countFine;
+    if (elCountCafe) elCountCafe.textContent = countCafe;
+    if (elCountZero) elCountZero.textContent = countZero;
+    if (elCountSaved) elCountSaved.textContent = countSaved;
+    // 2. Filter & Sort Hotel Partners
+    let list = [...RESTAURANT_AWARDS];
+
+    // Filter by Category
+    const cat = this.currentIndividualCategory;
+    if (cat === 'top_rated') {
+      list = list.filter(r => r.rating >= 4.90);
+    } else if (cat === 'champions') {
+      list = list.filter(r => r.highestBadgeLevel >= 4);
+    } else if (cat === 'luxury' || cat === 'finedining' || cat === 'cafe' || cat === 'zerowaste') {
+      list = list.filter(r => r.categoryKey === cat);
+    } else if (cat === 'bookmarks') {
+      list = list.filter(r => bookmarkedIds.includes(r.id));
+    }
+
+    // Filter by Search Query
+    if (this.individualSearchQuery.trim()) {
+      const q = this.individualSearchQuery.toLowerCase().trim();
+      list = list.filter(r => 
+        r.name.toLowerCase().includes(q) ||
+        r.location.toLowerCase().includes(q) ||
+        r.category.toLowerCase().includes(q) ||
+        (r.cityArea && r.cityArea.toLowerCase().includes(q))
+      );
+    }
+
+    // Filter by Badge Tier
+    if (this.individualBadgeFilter !== 'all') {
+      const lvl = parseInt(this.individualBadgeFilter, 10);
+      list = list.filter(r => r.highestBadgeLevel === lvl);
+    }
+
+    // Sort Hotels
+    const sort = this.individualSortBy;
+    if (sort === 'rating_desc') {
+      list.sort((a, b) => b.rating - a.rating);
+    } else if (sort === 'meals_desc') {
+      list.sort((a, b) => b.stats.mealsRescued - a.stats.mealsRescued);
+    } else if (sort === 'badge_desc') {
+      list.sort((a, b) => b.highestBadgeLevel - a.highestBadgeLevel);
+    } else if (sort === 'name_asc') {
+      list.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    // Update Category Pills Active State
+    document.querySelectorAll('.hotel-category-pill').forEach(btn => {
+      if (btn.getAttribute('data-category') === this.currentIndividualCategory) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // 4. Render Grid of Hotel Cards
+    if (list.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 16px;">
+          <div style="font-size: 2.8rem; margin-bottom: 12px; color: #94a3b8;"><i class="fa-solid fa-utensils"></i></div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">No partner venues match your criteria</h3>
+          <p style="color: #64748b; font-size: 0.9rem; max-width: 440px; margin: 0 auto 18px auto;">Try clearing search keywords or selecting 'All Hotels & Restos' to explore all verified hospitality partners.</p>
+          <button class="btn btn-outline-green btn-sm" onclick="App.resetIndividualFilters()">
+            <i class="fa-solid fa-rotate-left"></i> Reset All Filters
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = list.map(rest => {
+      const isSaved = bookmarkedIds.includes(rest.id);
+
+      // Badge Ribbon Graphic based on Level
+      let badgeRibbonHtml = '';
+      if (rest.highestBadgeLevel === 5) {
+        badgeRibbonHtml = `<span class="hotel-badge-ribbon" style="background: linear-gradient(135deg, #b45309, #78350f); color: #ffffff;"><i class="fa-solid fa-trophy" style="color:#fde047;"></i> L5 PlateShare Legend</span>`;
+      } else if (rest.highestBadgeLevel === 4) {
+        badgeRibbonHtml = `<span class="hotel-badge-ribbon" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: #ffffff;"><i class="fa-solid fa-gem" style="color:#bae6fd;"></i> L4 Community Champion</span>`;
+      } else if (rest.highestBadgeLevel === 3) {
+        badgeRibbonHtml = `<span class="hotel-badge-ribbon" style="background: linear-gradient(135deg, #ea580c, #c2410c); color: #ffffff;"><i class="fa-solid fa-medal" style="color:#fed7aa;"></i> L3 Food Hero</span>`;
+      } else if (rest.highestBadgeLevel === 2) {
+        badgeRibbonHtml = `<span class="hotel-badge-ribbon" style="background: linear-gradient(135deg, #9333ea, #7e22ce); color: #ffffff;"><i class="fa-solid fa-medal" style="color:#e9d5ff;"></i> L2 Food Saver</span>`;
+      } else {
+        badgeRibbonHtml = `<span class="hotel-badge-ribbon" style="background: linear-gradient(135deg, #c27803, #92400e); color: #ffffff;"><i class="fa-solid fa-medal" style="color:#fef08a;"></i> L1 Starter Rescue</span>`;
+      }
+
+      return `
+        <div class="hotel-card" id="hotelCard-${rest.id}">
+          <div class="hotel-card-image-wrap">
+            <img src="${rest.image}" alt="${rest.name}" loading="lazy" />
+            <span class="hotel-category-tag">${rest.category}</span>
+            <button 
+              class="hotel-bookmark-btn ${isSaved ? 'active' : ''}" 
+              onclick="App.toggleHotelBookmark('${rest.id}')" 
+              title="${isSaved ? 'Remove from Saved' : 'Save to Favorites'}"
+              aria-label="Save hotel"
+            >
+              <i class="${isSaved ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+            </button>
+            ${badgeRibbonHtml}
+          </div>
+
+          <div class="hotel-card-body">
+            <div class="hotel-rating-row">
+              <div class="hotel-rating-pill">
+                <span>★</span>
+                <span>${rest.rating.toFixed(2)}</span>
+              </div>
+              <span class="hotel-review-count">
+                <i class="fa-solid fa-shield-check" style="color:var(--color-forest-green); margin-right:2px;"></i> ${rest.reviewCount} NGO reviews
+              </span>
+            </div>
+
+            <h3 class="hotel-title">${rest.name}</h3>
+            <div class="hotel-location-text">
+              <i class="fa-solid fa-location-dot" style="color:var(--color-forest-green);"></i>
+              <span>${rest.location}</span>
+            </div>
+
+            <div class="hotel-impact-strip">
+              <div>
+                <div class="hotel-impact-val" style="color:var(--color-forest-green);">${rest.stats.mealsRescued.toLocaleString()}</div>
+                <div class="hotel-impact-lbl">Meals Rescued</div>
+              </div>
+              <div>
+                <div class="hotel-impact-val" style="color:#4338ca;">${rest.stats.co2Prevented}</div>
+                <div class="hotel-impact-lbl">CO₂ Avoided</div>
+              </div>
+            </div>
+
+            <div class="hotel-quote-box">
+              "${rest.quote}"
+              <div style="font-size: 0.72rem; color: #64748b; font-style: normal; margin-top: 4px; font-weight: 700;">
+                — ${rest.reviewerOrg}
+              </div>
+            </div>
+
+            <div class="hotel-card-actions">
+              <button class="btn btn-outline-green btn-sm" style="width: 100%; font-weight: 700; font-size: 0.85rem; padding: 9px 14px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="App.openHotelDetailModal('${rest.id}')">
+                <i class="fa-solid fa-award"></i> View Badges & Info
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+
+  filterIndividualCategory(cat) {
+    this.currentIndividualCategory = cat;
+    this.renderIndividualPage();
+  },
+
+  handleIndividualSearch(query) {
+    this.individualSearchQuery = query;
+    this.renderIndividualPage();
+  },
+
+  handleIndividualBadgeFilter(lvl) {
+    this.individualBadgeFilter = lvl;
+    this.renderIndividualPage();
+  },
+
+  handleIndividualSort(sortBy) {
+    this.individualSortBy = sortBy;
+    this.renderIndividualPage();
+  },
+
+  resetIndividualFilters() {
+    this.currentIndividualCategory = 'all';
+    this.individualSearchQuery = '';
+    this.individualBadgeFilter = 'all';
+    this.individualSortBy = 'rating_desc';
+
+    const searchInput = document.getElementById('individualSearchInput');
+    const badgeSelect = document.getElementById('individualBadgeFilter');
+    const sortSelect = document.getElementById('individualSortSelect');
+
+    if (searchInput) searchInput.value = '';
+    if (badgeSelect) badgeSelect.value = 'all';
+    if (sortSelect) sortSelect.value = 'rating_desc';
+
+    this.renderIndividualPage();
+    this.showToast('Filters reset to default.', 'info', 'Filters');
+  },
+
+  toggleHotelBookmark(hotelId) {
+    const isSaved = PlateStore.toggleHotelBookmark(hotelId);
+    const hotel = RESTAURANT_AWARDS.find(r => r.id === hotelId);
+    const hotelName = hotel ? hotel.name : 'Hotel';
+
+    if (isSaved) {
+      this.showToast(`<strong>${hotelName}</strong> saved to your favorites!`, 'success', 'Saved Hotel');
+    } else {
+      this.showToast(`Removed <strong>${hotelName}</strong> from favorites.`, 'info', 'Bookmark Updated');
+    }
+
+    this.renderIndividualPage();
+  },
+
+  openHotelDetailModal(hotelId) {
+    const rest = RESTAURANT_AWARDS.find(r => r.id === hotelId);
+    if (!rest) return;
+
+    const overlay = document.getElementById('individualHotelModalOverlay');
+    const body = document.getElementById('individualHotelModalBody');
+    if (!overlay || !body) return;
+
+    const reviews = PlateStore.getReviews(rest.name);
+
+    body.innerHTML = `
+      <div style="margin-bottom: 20px;">
+        <div style="position: relative; height: 180px; border-radius: 12px; overflow: hidden; margin-bottom: 16px;">
+          <img src="${rest.image}" alt="${rest.name}" style="width:100%; height:100%; object-fit:cover;" />
+          <span style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); color: #fff; padding: 4px 10px; border-radius: 14px; font-size: 0.75rem; font-weight: 700;">
+            ${rest.category}
+          </span>
+          <span style="position: absolute; bottom: 12px; left: 12px; background: ${rest.tierBg}; color: ${rest.tierColor}; padding: 4px 12px; border-radius: 14px; font-size: 0.8rem; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+            ${rest.tier}
+          </span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <h2 style="font-size: 1.45rem; font-weight: 800; color: #1e293b; margin-bottom: 4px;">${rest.name}</h2>
+            <div style="font-size: 0.88rem; color: #64748b;">
+              <i class="fa-solid fa-location-dot" style="color:var(--color-forest-green); margin-right:4px;"></i> ${rest.location}
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 1.25rem; font-weight: 800; color: #b45309; display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+              <span>★</span> ${rest.rating.toFixed(2)}
+            </div>
+            <div style="font-size: 0.75rem; color: #64748b;">${rest.reviewCount} Verified NGO Reviews</div>
+          </div>
+        </div>
+
+        <!-- Hygiene & Certification Strip -->
+        <div style="display: flex; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 140px;">
+            <div style="font-size: 0.72rem; color: #64748b; text-transform: uppercase;">FSSAI Food Hygiene Audit</div>
+            <div style="font-size: 0.92rem; font-weight: 800; color: var(--color-forest-green);">${rest.fssaiRating}</div>
+          </div>
+          <div style="flex: 1; min-width: 140px; border-left: 1px solid #e2e8f0; padding-left: 12px;">
+            <div style="font-size: 0.72rem; color: #64748b; text-transform: uppercase;">Meals Saved From Waste</div>
+            <div style="font-size: 0.92rem; font-weight: 800; color: #c2410c;">${rest.stats.mealsRescued.toLocaleString()} meals (${rest.stats.kgSaved} kg)</div>
+          </div>
+          <div style="flex: 1; min-width: 140px; border-left: 1px solid #e2e8f0; padding-left: 12px;">
+            <div style="font-size: 0.72rem; color: #64748b; text-transform: uppercase;">Environmental Impact</div>
+            <div style="font-size: 0.92rem; font-weight: 800; color: #4338ca;">${rest.stats.co2Prevented} CO₂ Diverted</div>
+          </div>
+        </div>
+
+        <!-- Badges Earned Section -->
+        <div style="margin-bottom: 20px;">
+          <h4 style="font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-ribbon" style="color:#059669;"></i> Earned Rescue Badges:
+          </h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+            ${rest.badges.map(b => `
+              <div style="background: #fdf8eb; border: 1px solid #fde68a; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid ${b.icon}" style="color:${b.color}; font-size: 1.1rem;"></i>
+                <div>
+                  <div style="font-size: 0.82rem; font-weight: 800; color: #92400e;">${b.name}</div>
+                  <div style="font-size: 0.72rem; color: #78350f;">${b.desc}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Verified Reviews from NGOs -->
+        <div style="margin-bottom: 20px;">
+          <h4 style="font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-comments" style="color:#f59e0b;"></i> Verified NGO & Community Feedback:
+          </h4>
+          <div style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto; padding-right: 4px;">
+            ${reviews.slice(0, 3).map(rev => `
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 0.82rem; font-weight: 700; color: #1f4d36;">
+                    <i class="fa-solid fa-circle-check" style="color:#059669;"></i> ${rev.reviewerOrg}
+                  </span>
+                  <span style="font-size: 0.78rem; font-weight: 800; color: #b45309;">${'★'.repeat(rev.rating)}</span>
+                </div>
+                <p style="font-size: 0.78rem; color: #475569; margin: 0; line-height: 1.4;">"${rev.comment}"</p>
+                <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">Verified Rescue — ${rev.date}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+          <button class="btn btn-outline-green btn-sm" onclick="App.openCertModal('${rest.id}')">
+            <i class="fa-solid fa-certificate"></i> View Official Certificate
+          </button>
+          <button class="btn btn-forest btn-sm" onclick="App.closeHotelDetailModal()">
+            Done
+          </button>
+        </div>
+      </div>
+    `;
+
+    overlay.classList.add('active');
+  },
+
+  closeHotelDetailModal() {
+    const overlay = document.getElementById('individualHotelModalOverlay');
+    if (overlay) overlay.classList.remove('active');
+  },
+
   renderStepper(currentStep) {
     const steps = [
       { num: 1, label: 'Posted' },
@@ -1247,6 +1738,10 @@ const App = {
   },
 
   claimDonation(id) {
+    if (this.currentRole === 'individual') {
+      this.showToast('Individuals cannot claim surplus food. Surplus food is reserved for authorized NGOs & community relief kitchens.', 'warning', 'Access Restricted');
+      return;
+    }
     const user = PlateStore.getCurrentUser();
     const item = PlateStore.getDonationById(id);
     if (!item) return;
@@ -1267,6 +1762,10 @@ const App = {
   },
 
   claimCommunityMeal(id) {
+    if (this.currentRole === 'individual') {
+      this.showToast('Individuals cannot claim surplus food. Surplus food is reserved for authorized NGOs & community relief kitchens.', 'warning', 'Access Restricted');
+      return;
+    }
     const user = PlateStore.getCurrentUser();
     const item = PlateStore.getDonationById(id);
     if (!item) return;
